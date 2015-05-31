@@ -41,7 +41,7 @@ type SparseVoxelOctree<'a when 'a : equality>(centre  : (float * float * float),
         match nodes with
             | Full a when a = element -> ()  // it's already there
 
-            | Full a when nodeHeight = 0u -> // fill in the voxel
+            | Full a when nodeHeight = 0u -> // at minimum resolution, fill in the voxel
                  this.SetNodes (Full element)
 
             | Full a -> // need to subdivide
