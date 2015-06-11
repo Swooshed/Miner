@@ -25,39 +25,58 @@ type Game () =
         GL.ClearColor Color4.DarkBlue
 
     // Set up VBOs
-    let mutable vertexArrayID = 0
-    let mutable vertexBufferID = 0
+    let vertexArrayID = GL.GenVertexArray ()
+    let vertexBufferID = GL.GenBuffer ()
     let programID = loadShaders "SimpleVertexShader.glsl" "SimpleFragmentShader.glsl"
     let vertexBufferData = [|
             -1.f; -1.f; 0.f;
              1.f; -1.f; 0.f;
              0.f;  1.f; 0.f; |] 
-    do  GL.GenVertexArrays (1, &vertexArrayID)
-        GL.BindVertexArray vertexArrayID
+    do  GL.BindVertexArray vertexArrayID
 
-        GL.GenBuffers (1, &vertexBufferID)
         GL.BindBuffer (BufferTarget.ArrayBuffer, vertexBufferID)
         let bufferSize = nativeint (sizeof<float32> * vertexBufferData.Length)
         GL.BufferData (BufferTarget.ArrayBuffer, bufferSize, vertexBufferData, BufferUsageHint.StaticDraw)
 
+        
+    let mutable mvp =
+        //let projection = MathUtils.Matrix.CreatePerspectiveFieldOfView (float32 System.Math.PI/4.f , float32 4 / float32 3, 0.1f, 100.f)
+        let projection = MathUtils.Matrix.CreateOrthographicOffCenter(-10.f, 10.f, -10.f, 10.f, 0.f, 100.f)
+        //let projection = MathUtils.Matrix.Identity
+
+
+        let view = MathUtils.Matrix.LookAt (new MathUtils.Vector3 (2.f, 2.f, 0.f),
+                                            new MathUtils.Vector3 (0.f, 0.f, 0.f),
+                                            new MathUtils.Vector3 (0.f, 1.f, 0.f))
+
+        let model = MathUtils.Matrix.Identity
+        // FIXME: lookAt seemingly not working with a perspective view
+        projection * view * model
+                             
+        
+
+    let matrixID = GL.GetUniformLocation (programID, "MVP")
+
     interface System.IDisposable with
-        member this.Dispose() =
+        member this.Dispose () =
+            GL.DeleteBuffer vertexBufferID
+            GL.DeleteProgram programID
+            GL.DeleteVertexArray vertexArrayID
             Glfw.DestroyWindow window
             Glfw.Terminate ()
 
     member this.Run () =
 
-
-        // set error callback
-        // set input callback
-
         while not (Glfw.WindowShouldClose window) do
             GL.Clear (ClearBufferMask.ColorBufferBit ||| ClearBufferMask.DepthBufferBit)
+            GL.UseProgram programID
+
+            GL.UniformMatrix4(matrixID, false, &mvp)
             GL.EnableVertexAttribArray 0
             GL.BindBuffer (BufferTarget.ArrayBuffer, vertexBufferID)
             GL.VertexAttribPointer (0, 3, VertexAttribPointerType.Float, false, 0, nativeint 0)
 
-            GL.UseProgram(programID)
+
             GL.DrawArrays (BeginMode.Triangles, 0, 3)
             GL.DisableVertexAttribArray 0
 
