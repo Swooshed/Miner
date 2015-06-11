@@ -45,7 +45,7 @@ type Game () =
         //let projection = MathUtils.Matrix.Identity
 
 
-        let view = MathUtils.Matrix.LookAt (new MathUtils.Vector3 (2.f, 2.f, 0.f),
+        let view = MathUtils.Matrix.LookAt (new MathUtils.Vector3 (0.f, 0.f, -2.f),
                                             new MathUtils.Vector3 (0.f, 0.f, 0.f),
                                             new MathUtils.Vector3 (0.f, 1.f, 0.f))
 
