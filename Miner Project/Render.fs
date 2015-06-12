@@ -29,31 +29,28 @@ type Game () =
     let vertexBufferID = GL.GenBuffer ()
     let programID = loadShaders "SimpleVertexShader.glsl" "SimpleFragmentShader.glsl"
     let vertexBufferData = [|
-            -1.f; -1.f; 0.f;
+             0.f;  1.f; 0.f; 
              1.f; -1.f; 0.f;
-             0.f;  1.f; 0.f; |] 
+            -1.f; -1.f; 0.f;|] 
     do  GL.BindVertexArray vertexArrayID
-
         GL.BindBuffer (BufferTarget.ArrayBuffer, vertexBufferID)
         let bufferSize = nativeint (sizeof<float32> * vertexBufferData.Length)
         GL.BufferData (BufferTarget.ArrayBuffer, bufferSize, vertexBufferData, BufferUsageHint.StaticDraw)
 
         
     let mutable mvp =
-        //let projection = MathUtils.Matrix.CreatePerspectiveFieldOfView (float32 System.Math.PI/4.f , float32 4 / float32 3, 0.1f, 100.f)
-        let projection = MathUtils.Matrix.CreateOrthographicOffCenter(-10.f, 10.f, -10.f, 10.f, 0.f, 100.f)
-        //let projection = MathUtils.Matrix.Identity
+        let projection = MathUtils.Matrix.CreatePerspectiveFieldOfView (
+                            float32 System.Math.PI/4.f,
+                            4.f / 3.f,
+                            0.1f,
+                            100.f)
 
-
-        let view = MathUtils.Matrix.LookAt (new MathUtils.Vector3 (0.f, 0.f, -2.f),
+        let view = MathUtils.Matrix.LookAt (new MathUtils.Vector3 (4.f, 4.f, 3.f),
                                             new MathUtils.Vector3 (0.f, 0.f, 0.f),
                                             new MathUtils.Vector3 (0.f, 1.f, 0.f))
 
         let model = MathUtils.Matrix.Identity
-        // FIXME: lookAt seemingly not working with a perspective view
-        projection * view * model
-                             
-        
+        model * view * projection // somehow this works where projection * view * model doesn't???
 
     let matrixID = GL.GetUniformLocation (programID, "MVP")
 
@@ -76,10 +73,8 @@ type Game () =
             GL.BindBuffer (BufferTarget.ArrayBuffer, vertexBufferID)
             GL.VertexAttribPointer (0, 3, VertexAttribPointerType.Float, false, 0, nativeint 0)
 
-
             GL.DrawArrays (BeginMode.Triangles, 0, 3)
             GL.DisableVertexAttribArray 0
-
 
             Glfw.SwapBuffers window
             Glfw.PollEvents()
