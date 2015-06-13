@@ -37,29 +37,24 @@
     <DocumentationFile>bin\Release\Miner_Project.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="mscorlib" />
-    <Reference Include="FSharp.Core, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="NVorbis">
-      <HintPath>..\..\Pencil.Gaming\Pencil.Gaming\bin\Compatibility-GLFW3\NVorbis.dll</HintPath>
-    </Reference>
-    <Reference Include="Pencil.Gaming">
-      <HintPath>..\..\Pencil.Gaming\Pencil.Gaming\bin\Compatibility-GLFW3\Pencil.Gaming.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-  </ItemGroup>
+  <PropertyGroup>
+    <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')" />
   <ItemGroup>
     <None Include="App.config" />
     <Compile Include="SparseVoxelOctree.fs" />
     <Compile Include="LoadShaders.fs" />
+    <None Include="gl_cube.obj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="SimpleFragmentShader.glsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="SimpleVertexShader.glsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <Compile Include="ObjectLoader.fs" />
     <Compile Include="Render.fs" />
     <Compile Include="Main.fs" />
     <None Include="natives32\GLFW_LINUX_BROKEN.so">
@@ -117,11 +112,27 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />
+    <None Include="gl_uvmap.DDS">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Content Include="gl_uvmap.bmp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
-  <PropertyGroup>
-    <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
-  </PropertyGroup>
-  <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')" />
+  <ItemGroup>
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NVorbis">
+      <HintPath>..\..\Pencil.Gaming\Pencil.Gaming\bin\Compatibility-GLFW3\NVorbis.dll</HintPath>
+    </Reference>
+    <Reference Include="Pencil.Gaming">
+      <HintPath>..\..\Pencil.Gaming\Pencil.Gaming\bin\Compatibility-GLFW3\Pencil.Gaming.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
