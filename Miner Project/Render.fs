@@ -107,7 +107,7 @@ type Game () =
         GL.Enable EnableCap.DepthTest
         GL.DepthFunc DepthFunction.Less
         GL.Enable EnableCap.CullFace
-    let camera = new ViewCamera.ViewCamera()
+    let camera = new ViewCamera()
 
     // Set up VBOs
     let vertexArrayID = GL.GenVertexArray ()
