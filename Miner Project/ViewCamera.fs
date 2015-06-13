@@ -14,7 +14,7 @@ type ViewCamera (position_, vertAngle_, horizAngle_, fov_, speed_) =
     let mutable fov      = fov_
     let mutable speed    = speed_
 
-    // TODO: rotating still not quite working right
+    // FIXME: rotating still not quite working right
 
     let mutable lastTime = Glfw.GetTime ()
     let mouseSpeed = 0.5f
