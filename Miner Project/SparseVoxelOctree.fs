@@ -16,7 +16,9 @@ type SparseVoxelOctree<'a when 'a : equality>(centre  : (float * float * float),
     member this.Centre      = centre
     member this.NodeHeight  = nodeHeight
     member this.SetNodes n  = nodes <- n
-    member this.GetNodes () = nodes
+    member this.Nodes
+        with get () = nodes
+        and  set nodes_ = nodes <- nodes_
 
     (*
     Which octant is the point in compared to the tree? There are 8 possibilities: each of the three axes is split into two halves, making 8 total.
@@ -57,7 +59,7 @@ type SparseVoxelOctree<'a when 'a : equality>(centre  : (float * float * float),
 
             | Subdivided arr when nodeHeight > 0u -> // Recurse, and if we fill a node up then replace it with a Full
                 arr.[this.WhichOctant position].Insert position element
-                if Array.forall (function (x : SparseVoxelOctree<'a>) -> x.GetNodes() = Full element) arr
+                if Array.forall (function (x : SparseVoxelOctree<'a>) -> x.Nodes = Full element) arr
                     then this.SetNodes (Full element)
 
 

@@ -2,6 +2,7 @@
 
 open Miner.SparseVoxelOctree
 open Miner.LoadShaders
+open Miner.ViewCamera
 
 open Pencil.Gaming
 open Pencil.Gaming.Graphics 
@@ -106,6 +107,7 @@ type Game () =
         GL.Enable EnableCap.DepthTest
         GL.DepthFunc DepthFunction.Less
         GL.Enable EnableCap.CullFace
+    let camera = new ViewCamera.ViewCamera()
 
     // Set up VBOs
     let vertexArrayID = GL.GenVertexArray ()
@@ -113,16 +115,6 @@ type Game () =
 
     let programID = loadShaders "SimpleVertexShader.glsl" "SimpleFragmentShader.glsl"
     let matrixID = GL.GetUniformLocation (programID, "MVP")
-
-    let mutable mvp =
-        let projection = MathUtils.Matrix.CreatePerspectiveFieldOfView (pi/4.f, 4.f/3.f, 0.1f, 100.f)
-
-        let view = MathUtils.Matrix.LookAt (new MathUtils.Vector3 (4.f, 4.f, 3.f),
-                                            new MathUtils.Vector3 (0.f, 0.f, 0.f),
-                                            new MathUtils.Vector3 (0.f, 1.f, 0.f))
-
-        let model = MathUtils.Matrix.Identity
-        model * view * projection // somehow this works where projection * view * model doesn't???
 
     let textureID = GL.Utils.LoadImage "gl_uvmap.bmp"
 
@@ -147,6 +139,11 @@ type Game () =
         while not (Glfw.WindowShouldClose window) do
             GL.Clear (ClearBufferMask.ColorBufferBit ||| ClearBufferMask.DepthBufferBit)
             GL.UseProgram programID
+            let mutable mvp =
+                let (projection, view) = camera.handleInput window
+
+                let model = MathUtils.Matrix.Identity
+                model * view * projection // somehow this works where projection * view * model doesn't???
 
             GL.UniformMatrix4(matrixID, false, &mvp)
 
