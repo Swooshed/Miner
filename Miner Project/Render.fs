@@ -30,7 +30,7 @@ type Game () =
         GL.ClearColor Color4.DarkBlue
         GL.Enable EnableCap.DepthTest
         GL.DepthFunc DepthFunction.Less
-        //GL.Enable EnableCap.CullFace
+        //GL.Enable EnableCap.CullFace // FIXME: this seems to cull the wrong face
     let camera = new ViewCamera()
 
     // Set up VBOs
@@ -39,26 +39,12 @@ type Game () =
 
     let programID = loadShaders "SimpleVertexShader.glsl" "SimpleFragmentShader.glsl"
     let matrixID = GL.GetUniformLocation (programID, "MVP")
-
     let textureID = GL.Utils.LoadImage "gl_uvmap.bmp"
-
-//    let vertexBufferID = GL.GenBuffer ()
-//    do  GL.BindBuffer (BufferTarget.ArrayBuffer, vertexBufferID)
-//        GL.BufferData (BufferTarget.ArrayBuffer, bufferSize vertexBufferData, vertexBufferData, BufferUsageHint.StaticDraw)    
-//    
-//    let indexBufferID = GL.GenBuffer ()
-//    do  GL.BindBuffer (BufferTarget.ElementArrayBuffer, indexBufferID)
-//        GL.BufferData (BufferTarget.ElementArrayBuffer, bufferSize indexBufferData, indexBufferData, BufferUsageHint.StaticDraw)
 
     let cube = new ObjVBO ("gl_cube.obj")
 
-//    let uvBufferID = GL.GenBuffer ()
-//    do  GL.BindBuffer (BufferTarget.ArrayBuffer, uvBufferID)
-//        GL.BufferData (BufferTarget.ArrayBuffer, bufferSize uvBufferData, uvBufferData, BufferUsageHint.StaticDraw)
-
     interface System.IDisposable with
         member this.Dispose () =
-            //GL.DeleteBuffer vertexBufferID
             GL.DeleteProgram programID
             GL.DeleteTexture textureID
             GL.DeleteVertexArray vertexArrayID
@@ -69,37 +55,27 @@ type Game () =
         while not (Glfw.WindowShouldClose window) do
             GL.Clear (ClearBufferMask.ColorBufferBit ||| ClearBufferMask.DepthBufferBit)
             GL.UseProgram programID
+
+            let (projection, view) = camera.handleInput window
+            let model = MathUtils.Matrix.Identity
             let mutable mvp =
-                let (projection, view) = camera.handleInput window
-
-                let model = MathUtils.Matrix.Identity
                 model * view * projection // somehow this works where projection * view * model doesn't???
-
             GL.UniformMatrix4(matrixID, false, &mvp)
 
             GL.ActiveTexture TextureUnit.Texture0
             GL.BindTexture (TextureTarget.Texture2D, textureID)
             GL.Uniform1 (textureID, 0)
 
-            // vertices
-            GL.EnableVertexAttribArray 0
-            GL.BindBuffer (BufferTarget.ArrayBuffer, cube.VerticesID)
-            GL.VertexAttribPointer (0, 4, VertexAttribPointerType.Float, false, 0, nativeint 0)
+            cube.Draw()
 
-            // UVs
-            GL.EnableVertexAttribArray 1
-            GL.BindBuffer (BufferTarget.ArrayBuffer, cube.UVsID)
-            GL.VertexAttribPointer (1, 2, VertexAttribPointerType.Float, false, 0, nativeint 0)
 
-            // normals
-            GL.EnableVertexAttribArray 2
-            GL.BindBuffer (BufferTarget.ArrayBuffer, cube.NormalsID)
-            GL.VertexAttribPointer (2, 3, VertexAttribPointerType.Float, false, 0, nativeint 0)
+            // draw second cube
+            let model = MathUtils.Matrix.CreateTranslation(-3.f, 0.f, 0.f)
+            let mutable mvp =
+                model * view * projection // somehow this works where projection * view * model doesn't???
+            GL.UniformMatrix4(matrixID, false, &mvp)
 
-            GL.BindBuffer (BufferTarget.ElementArrayBuffer, cube.IndicesID)
-            GL.DrawElements (BeginMode.Triangles, cube.Indices.Length, DrawElementsType.UnsignedInt, nativeint 0)
-            GL.DisableVertexAttribArray 0
-            GL.DisableVertexAttribArray 1
+            cube.Draw ()
 
             Glfw.SwapBuffers window
             Glfw.PollEvents()

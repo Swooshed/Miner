@@ -1,5 +1,6 @@
 ﻿module Miner.ObjVBO
 
+open Pencil.Gaming
 open Pencil.Gaming.Graphics
 open Pencil.Gaming.MathUtils
 
@@ -48,3 +49,30 @@ type ObjVBO (path : string) =
         member this.Dispose () =
             let buffers = [| modelVBO; indexVBO; normalVBO; uvVBO; |]
             GL.DeleteBuffers (buffers.Length, buffers)
+
+    member this.Draw () =
+        // vertices
+        GL.EnableVertexAttribArray 0
+        GL.BindBuffer (BufferTarget.ArrayBuffer, this.VerticesID)
+        GL.VertexAttribPointer (0, 4, VertexAttribPointerType.Float, false, 0, nativeint 0)
+
+        // UVs
+        GL.EnableVertexAttribArray 1
+        GL.BindBuffer (BufferTarget.ArrayBuffer, this.UVsID)
+        GL.VertexAttribPointer (1, 2, VertexAttribPointerType.Float, false, 0, nativeint 0)
+
+        // normals
+        GL.EnableVertexAttribArray 2
+        GL.BindBuffer (BufferTarget.ArrayBuffer, this.NormalsID)
+        GL.VertexAttribPointer (2, 3, VertexAttribPointerType.Float, false, 0, nativeint 0)
+
+        // indices
+        GL.BindBuffer (BufferTarget.ElementArrayBuffer, this.IndicesID)
+
+        // draw
+        GL.DrawElements (BeginMode.Triangles, this.Indices.Length, DrawElementsType.UnsignedInt, nativeint 0)
+
+        // clean up
+        GL.DisableVertexAttribArray 0
+        GL.DisableVertexAttribArray 1
+        GL.DisableVertexAttribArray 2
