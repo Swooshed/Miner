@@ -12,11 +12,6 @@ type ObjVBO (path : string) =
     let mutable indices  : int[]     = [||]
 
     do  GL.Utils.LoadModel(path, &vertices, &normals, &uvs, &indices, false)
-        if vertices.Length = 0 || 
-           normals.Length  = 0 ||
-           uvs.Length      = 0 ||
-           indices.Length  = 0
-        then () //raise (new System.FormatException(".obj file format invalid"))
     let modelVBO = GL.GenBuffer ()
     do  GL.BindBuffer (BufferTarget.ArrayBuffer, modelVBO)
         GL.BufferData (BufferTarget.ArrayBuffer, bufferSize vertices, vertices, BufferUsageHint.StaticDraw)
@@ -51,5 +46,5 @@ type ObjVBO (path : string) =
 
     interface System.IDisposable with
         member this.Dispose () =
-            let buffers = [| modelVBO; indexVBO |] // normalVBO; uvVBO; |]
+            let buffers = [| modelVBO; indexVBO; normalVBO; uvVBO; |]
             GL.DeleteBuffers (buffers.Length, buffers)
