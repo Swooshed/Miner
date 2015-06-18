@@ -46,6 +46,7 @@
     <Compile Include="ViewCamera.fs" />
     <Compile Include="SparseVoxelOctree.fs" />
     <Compile Include="LoadShaders.fs" />
+    <Compile Include="ObjVBO.fs" />
     <None Include="gl_cube.obj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

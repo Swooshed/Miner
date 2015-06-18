@@ -2,6 +2,7 @@
 
 open Miner.SparseVoxelOctree
 open Miner.LoadShaders
+open Miner.ObjVBO
 open Miner.ViewCamera
 
 open Pencil.Gaming
@@ -10,81 +11,44 @@ open Pencil.Gaming.Graphics
 let bufferSize (arr : 'T[]) = nativeint (sizeof<'T> * arr.Length)
 let pi = float32 System.Math.PI
 
-let vertexBufferData = [|
-        -1.0f;-1.0f;-1.0f; // triangle 1 : begin
-        -1.0f;-1.0f; 1.0f;
-        -1.0f; 1.0f; 1.0f; // triangle 1 : end
-        1.0f; 1.0f;-1.0f; // triangle 2 : begin
-        -1.0f;-1.0f;-1.0f;
-        -1.0f; 1.0f;-1.0f; // triangle 2 : end
-        1.0f;-1.0f; 1.0f;
-        -1.0f;-1.0f;-1.0f;
-        1.0f;-1.0f;-1.0f;
-        1.0f; 1.0f;-1.0f;
-        1.0f;-1.0f;-1.0f;
-        -1.0f;-1.0f;-1.0f;
-        -1.0f;-1.0f;-1.0f;
-        -1.0f; 1.0f; 1.0f;
-        -1.0f; 1.0f;-1.0f;
-        1.0f;-1.0f; 1.0f;
-        -1.0f;-1.0f; 1.0f;
-        -1.0f;-1.0f;-1.0f;
-        -1.0f; 1.0f; 1.0f;
-        -1.0f;-1.0f; 1.0f;
-        1.0f;-1.0f; 1.0f;
-        1.0f; 1.0f; 1.0f;
-        1.0f;-1.0f;-1.0f;
-        1.0f; 1.0f;-1.0f;
-        1.0f;-1.0f;-1.0f;
-        1.0f; 1.0f; 1.0f;
-        1.0f;-1.0f; 1.0f;
-        1.0f; 1.0f; 1.0f;
-        1.0f; 1.0f;-1.0f;
-        -1.0f; 1.0f;-1.0f;
-        1.0f; 1.0f; 1.0f;
-        -1.0f; 1.0f;-1.0f;
-        -1.0f; 1.0f; 1.0f;
-        1.0f; 1.0f; 1.0f;
-        -1.0f; 1.0f; 1.0f;
-        1.0f;-1.0f; 1.0f; |] : float32[]
-
-let uvBufferData = [|
-    0.000059f; 1.0f-0.000004f;
-    0.000103f; 1.0f-0.336048f;
-    0.335973f; 1.0f-0.335903f;
-    1.000023f; 1.0f-0.000013f;
-    0.667979f; 1.0f-0.335851f;
-    0.999958f; 1.0f-0.336064f;
-    0.667979f; 1.0f-0.335851f;
-    0.336024f; 1.0f-0.671877f;
-    0.667969f; 1.0f-0.671889f;
-    1.000023f; 1.0f-0.000013f;
-    0.668104f; 1.0f-0.000013f;
-    0.667979f; 1.0f-0.335851f;
-    0.000059f; 1.0f-0.000004f;
-    0.335973f; 1.0f-0.335903f;
-    0.336098f; 1.0f-0.000071f;
-    0.667979f; 1.0f-0.335851f;
-    0.335973f; 1.0f-0.335903f;
-    0.336024f; 1.0f-0.671877f;
-    1.000004f; 1.0f-0.671847f;
-    0.999958f; 1.0f-0.336064f;
-    0.667979f; 1.0f-0.335851f;
-    0.668104f; 1.0f-0.000013f;
-    0.335973f; 1.0f-0.335903f;
-    0.667979f; 1.0f-0.335851f;
-    0.335973f; 1.0f-0.335903f;
-    0.668104f; 1.0f-0.000013f;
-    0.336098f; 1.0f-0.000071f;
-    0.000103f; 1.0f-0.336048f;
-    0.000004f; 1.0f-0.671870f;
-    0.336024f; 1.0f-0.671877f;
-    0.000103f; 1.0f-0.336048f;
-    0.336024f; 1.0f-0.671877f;
-    0.335973f; 1.0f-0.335903f;
-    0.667969f; 1.0f-0.671889f;
-    1.000004f; 1.0f-0.671847f;
-    0.667979f; 1.0f-0.335851f |] : float32[]
+//
+//let uvBufferData = [|
+//    0.000059f; 1.0f-0.000004f;
+//    0.000103f; 1.0f-0.336048f;
+//    0.335973f; 1.0f-0.335903f;
+//    1.000023f; 1.0f-0.000013f;
+//    0.667979f; 1.0f-0.335851f;
+//    0.999958f; 1.0f-0.336064f;
+//    0.667979f; 1.0f-0.335851f;
+//    0.336024f; 1.0f-0.671877f;
+//    0.667969f; 1.0f-0.671889f;
+//    1.000023f; 1.0f-0.000013f;
+//    0.668104f; 1.0f-0.000013f;
+//    0.667979f; 1.0f-0.335851f;
+//    0.000059f; 1.0f-0.000004f;
+//    0.335973f; 1.0f-0.335903f;
+//    0.336098f; 1.0f-0.000071f;
+//    0.667979f; 1.0f-0.335851f;
+//    0.335973f; 1.0f-0.335903f;
+//    0.336024f; 1.0f-0.671877f;
+//    1.000004f; 1.0f-0.671847f;
+//    0.999958f; 1.0f-0.336064f;
+//    0.667979f; 1.0f-0.335851f;
+//    0.668104f; 1.0f-0.000013f;
+//    0.335973f; 1.0f-0.335903f;
+//    0.667979f; 1.0f-0.335851f;
+//    0.335973f; 1.0f-0.335903f;
+//    0.668104f; 1.0f-0.000013f;
+//    0.336098f; 1.0f-0.000071f;
+//    0.000103f; 1.0f-0.336048f;
+//    0.000004f; 1.0f-0.671870f;
+//    0.336024f; 1.0f-0.671877f;
+//    0.000103f; 1.0f-0.336048f;
+//    0.336024f; 1.0f-0.671877f;
+//    0.335973f; 1.0f-0.335903f;
+//    0.667969f; 1.0f-0.671889f;
+//    1.000004f; 1.0f-0.671847f;
+//    0.667979f; 1.0f-0.335851f |] : float32[]
 
 
 type Game () =
@@ -106,7 +70,7 @@ type Game () =
         GL.ClearColor Color4.DarkBlue
         GL.Enable EnableCap.DepthTest
         GL.DepthFunc DepthFunction.Less
-        GL.Enable EnableCap.CullFace
+        //GL.Enable EnableCap.CullFace
     let camera = new ViewCamera()
 
     // Set up VBOs
@@ -118,17 +82,23 @@ type Game () =
 
     let textureID = GL.Utils.LoadImage "gl_uvmap.bmp"
 
-    let vertexBufferID = GL.GenBuffer ()
-    do  GL.BindBuffer (BufferTarget.ArrayBuffer, vertexBufferID)
-        GL.BufferData (BufferTarget.ArrayBuffer, bufferSize vertexBufferData, vertexBufferData, BufferUsageHint.StaticDraw)    
+//    let vertexBufferID = GL.GenBuffer ()
+//    do  GL.BindBuffer (BufferTarget.ArrayBuffer, vertexBufferID)
+//        GL.BufferData (BufferTarget.ArrayBuffer, bufferSize vertexBufferData, vertexBufferData, BufferUsageHint.StaticDraw)    
+//    
+//    let indexBufferID = GL.GenBuffer ()
+//    do  GL.BindBuffer (BufferTarget.ElementArrayBuffer, indexBufferID)
+//        GL.BufferData (BufferTarget.ElementArrayBuffer, bufferSize indexBufferData, indexBufferData, BufferUsageHint.StaticDraw)
 
-    let uvBufferID = GL.GenBuffer ()
-    do  GL.BindBuffer (BufferTarget.ArrayBuffer, uvBufferID)
-        GL.BufferData (BufferTarget.ArrayBuffer, bufferSize uvBufferData, uvBufferData, BufferUsageHint.StaticDraw)
+    let cube = new ObjVBO ("gl_cube.obj")
+
+//    let uvBufferID = GL.GenBuffer ()
+//    do  GL.BindBuffer (BufferTarget.ArrayBuffer, uvBufferID)
+//        GL.BufferData (BufferTarget.ArrayBuffer, bufferSize uvBufferData, uvBufferData, BufferUsageHint.StaticDraw)
 
     interface System.IDisposable with
         member this.Dispose () =
-            GL.DeleteBuffer vertexBufferID
+            //GL.DeleteBuffer vertexBufferID
             GL.DeleteProgram programID
             GL.DeleteTexture textureID
             GL.DeleteVertexArray vertexArrayID
@@ -153,17 +123,21 @@ type Game () =
 
             // vertices
             GL.EnableVertexAttribArray 0
-            GL.BindBuffer (BufferTarget.ArrayBuffer, vertexBufferID)
-            GL.VertexAttribPointer (0, 3, VertexAttribPointerType.Float, false, 0, nativeint 0)
+            GL.BindBuffer (BufferTarget.ArrayBuffer, cube.VerticesID)
+            GL.VertexAttribPointer (0, 4, VertexAttribPointerType.Float, false, 0, nativeint 0)
 
             // UVs
             GL.EnableVertexAttribArray 1
-            GL.BindBuffer (BufferTarget.ArrayBuffer, uvBufferID)
+            GL.BindBuffer (BufferTarget.ArrayBuffer, cube.UVsID)
             GL.VertexAttribPointer (1, 2, VertexAttribPointerType.Float, false, 0, nativeint 0)
 
-            //GL.BindTexture (TextureTarget.Texture2D, textureID)
+            // normals
+            GL.EnableVertexAttribArray 2
+            GL.BindBuffer (BufferTarget.ArrayBuffer, cube.NormalsID)
+            GL.VertexAttribPointer (2, 3, VertexAttribPointerType.Float, false, 0, nativeint 0)
 
-            GL.DrawArrays (BeginMode.Triangles, 0, 12*3)
+            GL.BindBuffer (BufferTarget.ElementArrayBuffer, cube.IndicesID)
+            GL.DrawElements (BeginMode.Triangles, cube.Indices.Length, DrawElementsType.UnsignedInt, nativeint 0)
             GL.DisableVertexAttribArray 0
             GL.DisableVertexAttribArray 1
 
