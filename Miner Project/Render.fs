@@ -41,7 +41,6 @@ type Game () =
     let matrixID = GL.GetUniformLocation (programID, "MVP")
     let textureID = GL.Utils.LoadImage "gl_uvmap.bmp"
 
-    // FIXME: does this call dispose() when it goes out of scope or does this need the use keyword?
     let cube = new ObjVBO ("gl_cube.obj") 
 
     interface System.IDisposable with
@@ -61,12 +60,6 @@ type Game () =
             // TODO: replace this with drawing an octree. Finally.
             // TODO: move the cube object to the draw module
             // TODO: pass vp to the draw function
-
-            // for each Full:
-                // model = (scale to size) * (translate to position)
-                // bind texture
-                // draw cube
-            // for Node: recurse on the sub-nodes
 
             // draw first cube
             let model = MathUtils.Matrix.Identity
