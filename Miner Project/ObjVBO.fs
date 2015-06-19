@@ -28,6 +28,15 @@ type ObjVBO (path : string) =
     let indexVBO = GL.GenBuffer ()
     do  GL.BindBuffer (BufferTarget.ElementArrayBuffer, indexVBO)
         GL.BufferData (BufferTarget.ElementArrayBuffer, bufferSize indices, indices, BufferUsageHint.StaticDraw)
+
+
+    override this.Finalize () =
+        let buffers = [| modelVBO; indexVBO; normalVBO; uvVBO; |]
+        GL.DeleteBuffers (buffers.Length, buffers)
+
+    interface System.IDisposable with
+        member this.Dispose () = this.Finalize ()
+
     member this.Vertices
         with get () = vertices
     member this.VerticesID
@@ -44,11 +53,6 @@ type ObjVBO (path : string) =
         with get () = indices
     member this.IndicesID
         with get () = indexVBO
-
-    interface System.IDisposable with
-        member this.Dispose () =
-            let buffers = [| modelVBO; indexVBO; normalVBO; uvVBO; |]
-            GL.DeleteBuffers (buffers.Length, buffers)
 
     member this.Draw () =
         // vertices
