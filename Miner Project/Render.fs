@@ -49,18 +49,19 @@ type Game () =
             GL.DeleteProgram programID
             GL.DeleteTexture textureID
             GL.DeleteVertexArray vertexArrayID
-            Glfw.DestroyWindow window
             Glfw.Terminate ()
 
     member this.Run () =
         while not (Glfw.WindowShouldClose window) do
             GL.Clear (ClearBufferMask.ColorBufferBit ||| ClearBufferMask.DepthBufferBit)
             GL.UseProgram programID
-
             let (projection, view) = camera.handleInput ()
+            let vp = view * projection
+
+            // draw first cube
             let model = MathUtils.Matrix.Identity
             let mutable mvp =
-                model * view * projection // somehow this works where projection * view * model doesn't???
+                model * vp // somehow this works where projection * view * model doesn't???
             GL.UniformMatrix4(matrixID, false, &mvp)
 
             GL.ActiveTexture TextureUnit.Texture0
@@ -73,7 +74,7 @@ type Game () =
             // draw second cube
             let model = MathUtils.Matrix.CreateTranslation(-3.f, 0.f, 0.f)
             let mutable mvp =
-                model * view * projection // somehow this works where projection * view * model doesn't???
+                model * vp // somehow this works where projection * view * model doesn't???
             GL.UniformMatrix4(matrixID, false, &mvp)
 
             cube.Draw ()
