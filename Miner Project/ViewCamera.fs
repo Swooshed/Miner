@@ -14,6 +14,7 @@ type ViewCamera (position_, viewOffset_, fov_, window) =
 
     let mutable savedCursorPos = None
     let mutable lastTime       = Glfw.GetTime ()
+    
 
 
     // constants
@@ -36,14 +37,10 @@ type ViewCamera (position_, viewOffset_, fov_, window) =
     let mouseButtonCallback window_ button action =
 
         if button = cameraMoveKey && window_ = window then        
-            let mutable width = 0
-            let mutable height = 0
-            Glfw.GetWindowSize(window, &width, &height) // TODO: add a convience method to library
+            let width, height = Glfw.GetWindowSize window
 
             if action = KeyAction.Press then // save cursor position, move to center of the screen
-                let mutable xpos = 0.
-                let mutable ypos = 0.
-                Glfw.GetCursorPos (window, &xpos, &ypos) // TODO: add a convience method to library
+                let xpos, ypos = Glfw.GetCursorPos window // TODO: add a convience method to library
                 savedCursorPos <- Some (xpos, ypos)
 
                 // TODO: hide cursor
@@ -75,13 +72,9 @@ type ViewCamera (position_, viewOffset_, fov_, window) =
         //    horizontal mouse movement will rotate the view
         //    vertical mouse movement will tilt the view
         if Glfw.GetMouseButton (window, cameraMoveKey) then
-            let mutable xpos = 0.
-            let mutable ypos = 0.
-            Glfw.GetCursorPos (window, &xpos, &ypos)
+            let xpos, ypos = Glfw.GetCursorPos window
 
-            let mutable width = 0
-            let mutable height = 0
-            Glfw.GetWindowSize(window, &width, &height)
+            let width, height = Glfw.GetWindowSize window
 
             Glfw.SetCursorPos (window, float (width/2), float (height/2))
             let hDelta = rotateSpeed * dt * (float32 width/2.f - float32 xpos)
@@ -89,6 +82,7 @@ type ViewCamera (position_, viewOffset_, fov_, window) =
 
             viewOffset <- Vector3.TransformVector (viewOffset, Matrix.CreateRotationY hDelta)
             viewOffset.Y <- viewOffset.Y - vDelta
+            // TODO: rotate viewOffset around (rotated) the X axis instead.
             
         let moveForward = Vector3.Normalize(new Vector3 (-viewOffset.X, 0.f, -viewOffset.Z))
         let slideLeft = Vector3.TransformVector (moveForward, Matrix.CreateRotationY (pi/2.f))

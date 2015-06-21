@@ -7,6 +7,9 @@ open Pencil.Gaming.MathUtils
 let bufferSize (arr : 'T[]) = nativeint (sizeof<'T> * arr.Length)
 
 type ObjVBO (path : string) =
+    let mutable disposed       = false
+
+    // TODO: turn this into tuples somehow?
     let mutable vertices : Vector4[] = [||]
     let mutable normals  : Vector3[] = [||]
     let mutable uvs      : Vector2[] = [||]
@@ -29,13 +32,15 @@ type ObjVBO (path : string) =
     do  GL.BindBuffer (BufferTarget.ElementArrayBuffer, indexVBO)
         GL.BufferData (BufferTarget.ElementArrayBuffer, bufferSize indices, indices, BufferUsageHint.StaticDraw)
 
-
-    override this.Finalize () =
-        let buffers = [| modelVBO; indexVBO; normalVBO; uvVBO; |]
-        GL.DeleteBuffers (buffers.Length, buffers)
-
-    interface System.IDisposable with
-        member this.Dispose () = this.Finalize ()
+// FIXME: this is crashing when called
+//    interface System.IDisposable with
+//        member this.Dispose () =
+//            disposed <- true
+//            let buffers = [| modelVBO; indexVBO; normalVBO; uvVBO; |]
+//            GL.DeleteBuffers (buffers.Length, buffers)
+//            
+//    override this.Finalize () =
+//        if not disposed then (this :> System.IDisposable).Dispose()
 
     member this.Vertices
         with get () = vertices

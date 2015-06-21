@@ -3,15 +3,14 @@
 open Miner.SparseVoxelOctree
 open Miner.LoadShaders
 open Miner.ObjVBO
+open Miner.RenderSparseVoxelOctree
 open Miner.ViewCamera
 
 open Pencil.Gaming
 open Pencil.Gaming.Graphics 
 
-let bufferSize (arr : 'T[]) = nativeint (sizeof<'T> * arr.Length)
-let pi = float32 System.Math.PI
-
 type Game () =
+    let mutable disposed = false
     // Initalise GLFW and context
     do  if not (Glfw.Init ()) then raise (new System.Exception "GLFW initialisation failed")
         Glfw.WindowHint(WindowHint.Samples, 4)
@@ -39,16 +38,19 @@ type Game () =
 
     let programID = loadShaders "SimpleVertexShader.glsl" "SimpleFragmentShader.glsl"
     let matrixID = GL.GetUniformLocation (programID, "MVP")
-    let textureID = GL.Utils.LoadImage "gl_uvmap.bmp"
 
-    let cube = new ObjVBO ("gl_cube.obj") 
+    let renderer = new SVORenderer (matrixID)
 
-    interface System.IDisposable with
-        member this.Dispose () =
-            GL.DeleteProgram programID
-            GL.DeleteTexture textureID
-            GL.DeleteVertexArray vertexArrayID
-            Glfw.Terminate ()
+// FIXME: this is crashing when called
+//    interface System.IDisposable with
+//        member this.Dispose () =
+//            GL.DeleteProgram programID
+//            GL.DeleteVertexArray vertexArrayID
+//            Glfw.Terminate ()
+//            disposed <- true
+//
+//    override this.Finalize () =
+//        if not disposed then (this :> System.IDisposable).Dispose()
 
     member this.Run () =
         while not (Glfw.WindowShouldClose window) do
@@ -56,32 +58,9 @@ type Game () =
             GL.UseProgram programID
             let (projection, view) = camera.handleInput ()
             let vp = view * projection
-
-            // TODO: replace this with drawing an octree. Finally.
-            // TODO: move the cube object to the draw module
-            // TODO: pass vp to the draw function
-
-            // draw first cube
-            let model = MathUtils.Matrix.Identity
-            let mutable mvp =
-                model * vp // somehow this works where projection * view * model doesn't???
-            GL.UniformMatrix4(matrixID, false, &mvp)
-
-            GL.ActiveTexture TextureUnit.Texture0
-            GL.BindTexture (TextureTarget.Texture2D, textureID)
-            GL.Uniform1 (textureID, 0)
-
-            cube.Draw()
-
-
-            // draw second cube
-            let model = MathUtils.Matrix.CreateTranslation(-3.f, 0.f, 0.f)
-            let mutable mvp =
-                model * vp // somehow this works where projection * view * model doesn't???
-            GL.UniformMatrix4(matrixID, false, &mvp)
-
-            cube.Draw ()
+            let initialModel = MathUtils.Matrix.Identity
+            renderer.Draw minimalSVO vp
 
             Glfw.SwapBuffers window
-            Glfw.PollEvents()
+            Glfw.PollEvents ()
 

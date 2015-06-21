@@ -6,7 +6,7 @@ let loadShaders (vertexPath : string) (fragmentPath : string) =
     let compileAndCheckShader path shaderMode =
         // Compile
         printf "Compiling shader: %s\n" path
-        let mutable iden = GL.CreateShader shaderMode
+        let iden = GL.CreateShader shaderMode
         let code = System.IO.File.ReadAllText path
 
         GL.ShaderSource (iden, code) // this line is not like the tutorial
@@ -20,7 +20,7 @@ let loadShaders (vertexPath : string) (fragmentPath : string) =
     let fragmentShaderID = compileAndCheckShader fragmentPath ShaderType.FragmentShader
 
     printf "Linking program\n"
-    let mutable programID = GL.CreateProgram ()
+    let programID = GL.CreateProgram ()
     GL.AttachShader (programID, vertexShaderID)
     GL.AttachShader (programID, fragmentShaderID)
     GL.LinkProgram programID
