@@ -11,7 +11,6 @@ type SVORenderer (matrixID) =
     let textureID = GL.Utils.LoadImage "gl_uvmap.bmp"
 
     member this.DrawAt (svo : SparseVoxelOctree<int>) (vp : Matrix) (oldM : Matrix) level =
-        do  printf "drawing at (%f, %f, %f)\n" svo.Centre.X svo.Centre.Y svo.Centre.Z
         let m = Matrix.CreateTranslation svo.Centre * oldM
         // FIXME: level parameter is quick and dirty
         let mutable mvp = Matrix.CreateScale 0.5f * m * vp

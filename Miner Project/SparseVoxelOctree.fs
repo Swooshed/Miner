@@ -17,7 +17,6 @@ type SparseVoxelOctree<'a when 'a : equality>(centre  : Vector3, nodeHeight : ui
 
     member this.Centre      = centre
     member this.NodeHeight  = nodeHeight
-    member this.SetNodes n  = nodes <- n
     member this.Nodes
         with get () = nodes
         and  set nodes_ = nodes <- nodes_
@@ -42,30 +41,27 @@ type SparseVoxelOctree<'a when 'a : equality>(centre  : Vector3, nodeHeight : ui
     member this.Insert position (element : 'a) =
         if not (this.inBounds position) then raise (new System.IndexOutOfRangeException())
 
-        // FIXME: this is failing to work, I think
+        // FIXME: this is failing to work
         match nodes with
             | Full a when a = element -> ()  // it's already there
 
             | Full a when nodeHeight = 0u -> // at minimum resolution, fill in the voxel
-                printf "filling\n"
-                this.SetNodes (Full element)
+                this.Nodes <- Full element
 
             | Full a -> // need to subdivide
-                printf "subdividing\n"
                 let octant_to_node n =
-                    let adjust o ca = (if n &&& o <> 0 then (+) else (-)) ca (2.f ** float32 (nodeHeight - 2u))
+                    let adjust o ca = (if n &&& o <> 0 then (+) else (-)) ca (2.f ** (float32 nodeHeight - 2.f))
                     let centre = new Vector3 (adjust 4 centre.X, adjust 2 centre.Y, adjust 1 centre.Z)
                     SparseVoxelOctree (centre,  nodeHeight - 1u, Full a)
                 let arr = Array.map octant_to_node [| 0..7 |]
                 // now we have split the full node into 8 full subnodes we can actually add our point
                 arr.[this.WhichOctant position].Insert position element
-                this.SetNodes (Subdivided arr)
+                this.Nodes <- Subdivided arr
 
             | Subdivided arr when nodeHeight > 0u -> // Recurse, and if we fill a node up then replace it with a Full
-                printf "recursing\n"
                 arr.[this.WhichOctant position].Insert position element
                 if Array.forall (function (x : SparseVoxelOctree<'a>) -> x.Nodes = Full element) arr
-                    then this.SetNodes (Full element)
+                    then this.Nodes <- Full element
 
 
              | _ -> // We're in an invalid state
@@ -76,6 +72,11 @@ type SparseVoxelOctree<'a when 'a : equality>(centre  : Vector3, nodeHeight : ui
             | Subdivided arr -> arr.[this.WhichOctant position].ClosestVoxel position
             | Full a         -> a
 
+    member this.AllNodes () =
+        match this.Nodes with
+            | Full a -> [|(this.Centre, a)|]
+            | Subdivided arr -> Array.concat(Array.map (fun (n:SparseVoxelOctree<'a>) -> n.AllNodes ()) arr)
+
 (*
 The idea is that there's no such thing as an 'empty' node. To reclaim this, simply use Option<a> for your type, where None represents empty space.
 *)
@@ -84,11 +85,14 @@ and SparseVoxelNode<'a when 'a : equality> =
     | Subdivided of SparseVoxelOctree<'a>[] // should always have length 8
 
 let minimalSVO =
-    let topRight = new SparseVoxelOctree<int>(new Vector3 (0.5f,0.5f,0.5f), 0u, Full 1)
-    let empty = new SparseVoxelOctree<int>(new Vector3 (), 1u, Full 0)
-    let bottomLeft = new SparseVoxelOctree<int>(new Vector3 (-0.5f,-0.5f,-0.5f), 0u, Full 1)
-    let empty = new SparseVoxelOctree<int>(new Vector3 (0.f,0.f,0.f), 1u, Subdivided [| bottomLeft; empty; empty; empty;
-                                                                                        empty; empty; empty; topRight; |])
-    empty.Insert (new Vector3 (0.9f, 0.9f, 0.9f)) 1
-    empty.Insert (new Vector3 (-0.9f, -0.9f, -0.9f)) 1
+    let empty = new SparseVoxelOctree<int>(new Vector3 (0.f,0.f,0.f), 2u, Full 0)
+    empty.Insert (new Vector3 (0.49f, 0.49f, 0.49f)) 1
+    empty.Insert (new Vector3 (0.49f, 0.49f, 0.51f)) 1
+    empty.Insert (new Vector3 (0.49f, 0.51f, 0.49f)) 1
+    empty.Insert (new Vector3 (0.49f, 0.51f, 0.51f)) 1
+    empty.Insert (new Vector3 (0.51f, 0.49f, 0.49f)) 1
+    empty.Insert (new Vector3 (0.51f, 0.49f, 0.51f)) 1
+    empty.Insert (new Vector3 (0.51f, 0.51f, 0.49f)) 1
+    empty.Insert (new Vector3 (0.51f, 0.51f, 0.51f)) 1
+    empty.Insert (new Vector3 (-0.5f, -0.5f, -0.5f)) 1
     empty
