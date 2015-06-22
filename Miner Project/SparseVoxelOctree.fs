@@ -11,7 +11,7 @@ TODO: implement a 'path to element' coordinate system maybe?
 
 let zipVector3With f (v:Vector3) (w:Vector3) = (f v.X w.X, f v.Y w.Y, f v.Z w.Z)
 
-
+// maybe uint 16 or 8 instead? For which n does (2 ** max_uintn) fit into float32?
 type SparseVoxelOctree<'a when 'a : equality>(centre  : Vector3, nodeHeight : uint32, nodes_ : SparseVoxelNode<'a>) =
     let mutable nodes = nodes_
 
