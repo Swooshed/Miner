@@ -1,4 +1,4 @@
-﻿module Miner.ObjVBO
+﻿module Miner.Utils.ObjVBO
 
 open Pencil.Gaming
 open Pencil.Gaming.Graphics

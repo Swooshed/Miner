@@ -1,8 +1,8 @@
-﻿module Miner.Render
+﻿module Miner.Graphics.Render
 
 open Miner.SparseVoxelOctree
-open Miner.LoadShaders
-open Miner.ObjVBO
+open Miner.Utils.LoadShaders
+open Miner.Utils.ObjVBO
 open Miner.RenderSparseVoxelOctree
 open Miner.ViewCamera
 
@@ -29,14 +29,14 @@ type Game () =
         GL.ClearColor Color4.DarkBlue
         GL.Enable EnableCap.DepthTest
         GL.DepthFunc DepthFunction.Less
-        //GL.Enable EnableCap.CullFace // FIXME: this seems to cull the wrong face
+        //GL.Enable EnableCap.CullFace // FIXME: the winding of the cube is wrong
     let camera = new ViewCamera(window)
 
     // Set up VBOs
     let vertexArrayID = GL.GenVertexArray ()
     do  GL.BindVertexArray vertexArrayID
 
-    let programID = loadShaders "SimpleVertexShader.glsl" "SimpleFragmentShader.glsl"
+    let programID = loadShaders "Resources/SimpleVertexShader.glsl" "Resources/SimpleFragmentShader.glsl"
     let matrixID = GL.GetUniformLocation (programID, "MVP")
 
     let renderer = new SVORenderer (matrixID)

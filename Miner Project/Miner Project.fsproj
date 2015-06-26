@@ -43,24 +43,7 @@
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')" />
   <ItemGroup>
     <None Include="App.config" />
-    <Compile Include="ViewCamera.fs" />
-    <Compile Include="SparseVoxelOctree.fs" />
-    <Compile Include="CubePicker.fs" />
-    <Compile Include="LoadShaders.fs" />
-    <Compile Include="ObjVBO.fs" />
-    <None Include="gl_cube.obj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="SimpleFragmentShader.glsl">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="SimpleVertexShader.glsl">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <Compile Include="ObjectLoader.fs" />
-    <Compile Include="RenderSparseVoxelOctree.fs" />
-    <Compile Include="Render.fs" />
-    <Compile Include="Main.fs" />
+    <None Include="packages.config" />
     <None Include="natives32\GLFW_LINUX_BROKEN.so">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -115,13 +98,30 @@
     <None Include="natives64\glfw.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="packages.config" />
-    <None Include="gl_uvmap.DDS">
+    <Compile Include="Utils\LoadShaders.fs" />
+    <Compile Include="Utils\ObjVBO.fs" />
+    <Compile Include="Utils\Misc.fs" />
+    <Compile Include="Blocks.fs" />
+    <Compile Include="SparseVoxelOctree.fs" />
+    <None Include="Resources\SimpleVertexShader.glsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Content Include="gl_uvmap.bmp">
+    <None Include="Resources\SimpleFragmentShader.glsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\gl_cube.obj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\gl_uvmap.DDS">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Content Include="Resources\gl_uvmap.bmp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Compile Include="Graphics\ViewCamera.fs" />
+    <Compile Include="Graphics\RenderSparseVoxelOctree.fs" />
+    <Compile Include="Graphics\Render.fs" />
+    <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Control.AsyncSeq">

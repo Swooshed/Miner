@@ -1,4 +1,4 @@
-﻿module Miner.LoadShaders
+﻿module Miner.Utils.LoadShaders
 
 open Pencil.Gaming.Graphics
 

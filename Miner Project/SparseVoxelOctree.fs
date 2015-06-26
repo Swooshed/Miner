@@ -1,81 +1,77 @@
 ﻿module Miner.SparseVoxelOctree
 
+open Miner.Blocks
+open Miner.Utils.Misc
+
 open Pencil.Gaming.MathUtils
 (*
-Because we're working over discrete voxels, there is a minimum resolution - at node_height 0, the octree is a single (by definition full) voxel.
-To avoid unevenly sized nodes, not to mention to make the maths easier, the number of voxels that can possibly exist
-in each octree is (2 ** node_height)^3
-
-TODO: implement a 'path to element' coordinate system maybe?
+Each cube thinks that it is the unit cube between (1,1,1) and (2,2,2).
+The 'size' field is the actual size of the cube - size = 0 is a single (Full) voxel.
+Size = 1 is either full or a node of 8 full voxels. And so on.
 *)
 
-let zipVector3With f (v:Vector3) (w:Vector3) = (f v.X w.X, f v.Y w.Y, f v.Z w.Z)
+// return a matrix which takes you to the relative coordinate system of the octant
+let octantMatrix n =
+    let translate = Matrix.CreateTranslation (originDiff n)
+    let scale = Matrix.CreateScale 2.f
+    scale * translate
 
-// maybe uint 16 or 8 instead? For which n does (2 ** max_uintn) fit into float32?
-type SparseVoxelOctree<'a when 'a : equality>(centre  : Vector3, nodeHeight : uint32, nodes_ : SparseVoxelNode<'a>) =
+// maybe uint 16 or 8 for size instead? For which n does (2 ** max_uintn) fit into float32?
+type SparseVoxelOctree<'a when 'a : equality>(size : int, nodes_ : SparseVoxelNode<'a>) =
     let mutable nodes = nodes_
 
-    member this.Centre      = centre
-    member this.NodeHeight  = nodeHeight
+    member this.Size = size
     member this.Nodes
         with get () = nodes
         and  set nodes_ = nodes <- nodes_
+    member this.AbsoluteRadius = 2.f ** float32 (size - 1)
+
+    member this.InRelativeBounds position =
+        let (bx, by, bz) = mapVector3T(fun x -> 1.f < x && x < 2.f) position
+        bx && by && bz
 
     (*
     Which octant is the point in compared to the tree? There are 8 possibilities: each of the three axes is split into two halves, making 8 total.
     These 8 octants are represented by a bool triple, indicating whether or not the point is ABOVE the three axes respectively. Then that (bool, bool, bool)
-    is interpreted as a binary number to give a value between 0 (false, false, false) and 7 (true, true, true).
+    is interpreted as a binary number to give a value between 0 (false, false, false), 1 (false, false, true), and 7 (true, true, true).
     *)
-    member this.WhichOctant position =
-        let d l c = if l > c then 1 else 0
-        let (dx, dy, dz) = zipVector3With d position centre
-        (dx <<< 2) ||| (dy <<< 1) ||| dz
-
-    member this.inBounds position =
-        let centre_to_edge              = 2.f ** (float32 (nodeHeight - 1u))
-        let abs_diff ca (a : float32)   = System.Math.Abs(ca - a)
-        let (dx, dy, dz)                = zipVector3With abs_diff centre position
-        let furthest_distance_to_centre = List.max [dx; dy; dz]
-        furthest_distance_to_centre <= centre_to_edge
+    member this.WhichOctant = mapVector3T (fun x -> x > 1.5f) >> boolsToOct
 
     member this.Insert position (element : 'a) =
-        if not (this.inBounds position) then raise (new System.IndexOutOfRangeException())
+        if not (this.InRelativeBounds position) then
+            raise (new System.IndexOutOfRangeException("The position was not contained inside the cube."))
+        let insertIntoChild (arr : SparseVoxelOctree<'a>[]) =
+            let newQuadrant = this.WhichOctant position
+            let newPosition = (position + originDiff newQuadrant) * 2.f
+            arr.[newQuadrant].Insert newPosition element
 
-        // FIXME: this is failing to work
-        match nodes with
-            | Full a when a = element -> ()  // it's already there
+        match this.Nodes with
+            | Full a when a = element -> () // it's already there
 
-            | Full a when nodeHeight = 0u -> // at minimum resolution, fill in the voxel
-                this.Nodes <- Full element
+            | Full a when size = 0 -> this.Nodes <- Full element // at minimum resolution, fill in the voxel
 
             | Full a -> // need to subdivide
-                let octant_to_node n =
-                    let adjust o ca = (if n &&& o <> 0 then (+) else (-)) ca (2.f ** (float32 nodeHeight - 2.f))
-                    let centre = new Vector3 (adjust 4 centre.X, adjust 2 centre.Y, adjust 1 centre.Z)
-                    SparseVoxelOctree (centre,  nodeHeight - 1u, Full a)
-                let arr = Array.map octant_to_node [| 0..7 |]
+                let arr = Array.init 8 (fun _ -> SparseVoxelOctree (size-1, Full a))
+
                 // now we have split the full node into 8 full subnodes we can actually add our point
-                arr.[this.WhichOctant position].Insert position element
+                insertIntoChild arr
                 this.Nodes <- Subdivided arr
 
-            | Subdivided arr when nodeHeight > 0u -> // Recurse, and if we fill a node up then replace it with a Full
-                arr.[this.WhichOctant position].Insert position element
-                if Array.forall (function (x : SparseVoxelOctree<'a>) -> x.Nodes = Full element) arr
-                    then this.Nodes <- Full element
-
+            | Subdivided arr when size > 0 -> // Recurse, and if we fill a node up then replace it with a Full
+                insertIntoChild arr
+                if Array.forall (fun (x : SparseVoxelOctree<'a>) -> x.Nodes = Full element) arr then
+                    this.Nodes <- Full element
 
              | _ -> // We're in an invalid state
                 raise (new System.InvalidOperationException())
 
     member this.ClosestVoxel position =
-        match nodes with
-            | Subdivided arr -> arr.[this.WhichOctant position].ClosestVoxel position
-            | Full a         -> a
-
-    member this.AllNodes () =
         match this.Nodes with
-            | Full a -> [|(this.Centre, a)|]
-            | Subdivided arr -> Array.concat(Array.map (fun (n:SparseVoxelOctree<'a>) -> n.AllNodes ()) arr)
+            | Subdivided arr ->
+                let newQuadrant = this.WhichOctant position
+                let newPosition = (position + originDiff newQuadrant) * 2.f
+                arr.[newQuadrant].ClosestVoxel position
+            | Full a         -> a
 
 (*
 The idea is that there's no such thing as an 'empty' node. To reclaim this, simply use Option<a> for your type, where None represents empty space.
@@ -85,14 +81,8 @@ and SparseVoxelNode<'a when 'a : equality> =
     | Subdivided of SparseVoxelOctree<'a>[] // should always have length 8
 
 let minimalSVO =
-    let empty = new SparseVoxelOctree<int>(new Vector3 (0.f,0.f,0.f), 2u, Full 0)
-    empty.Insert (new Vector3 (0.49f, 0.49f, 0.49f)) 1
-    empty.Insert (new Vector3 (0.49f, 0.49f, 0.51f)) 1
-    empty.Insert (new Vector3 (0.49f, 0.51f, 0.49f)) 1
-    empty.Insert (new Vector3 (0.49f, 0.51f, 0.51f)) 1
-    empty.Insert (new Vector3 (0.51f, 0.49f, 0.49f)) 1
-    empty.Insert (new Vector3 (0.51f, 0.49f, 0.51f)) 1
-    empty.Insert (new Vector3 (0.51f, 0.51f, 0.49f)) 1
-    empty.Insert (new Vector3 (0.51f, 0.51f, 0.51f)) 1
-    empty.Insert (new Vector3 (-0.5f, -0.5f, -0.5f)) 1
+    let empty = new SparseVoxelOctree<Block>(2, Full Transparent)
+    empty.Insert (new Vector3 (1.99f, 1.99f, 1.99f)) Translucent
+    empty.Insert (new Vector3 (1.01f, 1.01f, 1.01f)) Opaque
     empty
+    
