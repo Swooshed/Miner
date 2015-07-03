@@ -103,6 +103,7 @@
     <Compile Include="Utils\Misc.fs" />
     <Compile Include="Blocks.fs" />
     <Compile Include="SparseVoxelOctree.fs" />
+    <Compile Include="CubePicker.fs" />
     <None Include="Resources\SimpleVertexShader.glsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
