@@ -1,13 +1,18 @@
-﻿module Miner.Graphics.Render
+﻿module Miner.Graphics.Game
 
-open Miner.SparseVoxelOctree
-open Miner.Utils.LoadShaders
-open Miner.Utils.ObjVBO
+
+open Miner.CubePicker
 open Miner.RenderSparseVoxelOctree
+open Miner.SparseVoxelOctree
+open Miner.Utils.DoubleEndedList
+open Miner.Utils.LoadShaders
+open Miner.Utils.Misc
+open Miner.Utils.ObjVBO
 open Miner.ViewCamera
 
 open Pencil.Gaming
 open Pencil.Gaming.Graphics 
+open Pencil.Gaming.MathUtils
 
 type Game () =
     let mutable disposed = false
@@ -30,7 +35,7 @@ type Game () =
         GL.Enable EnableCap.DepthTest
         GL.DepthFunc DepthFunction.Less
         //GL.Enable EnableCap.CullFace // FIXME: the winding of the cube is wrong
-    let camera = new ViewCamera(window)
+    
 
     // Set up VBOs
     let vertexArrayID = GL.GenVertexArray ()
@@ -40,6 +45,8 @@ type Game () =
     let matrixID = GL.GetUniformLocation (programID, "MVP")
 
     let renderer = new SVORenderer (matrixID)
+    let mutable svo = minimalSVO
+    let camera = new ViewCamera(window, svo)
 
 // FIXME: this is crashing when called
 //    interface System.IDisposable with
@@ -59,8 +66,16 @@ type Game () =
             let (projection, view) = camera.handleInput ()
             let vp = view * projection
             let initialModel = MathUtils.Matrix.Identity
-            renderer.Draw minimalSVO vp
+            renderer.Draw svo vp
+
+            let pathO = camera.SelectedVoxel
+            Option.iter (fun (path:DoubleEndedList<int>) ->
+                printf "path = "
+
+                path.iter (fun n -> let (bx, by, bz) = octToBools n
+                                    printf "(%i, %i, %i) " (intIf bx) (intIf by) (intIf bz))
+                printfn "") pathO
+
 
             Glfw.SwapBuffers window
             Glfw.PollEvents ()
-

@@ -4,6 +4,7 @@ open Miner.Blocks
 open Miner.Utils.Misc
 
 open Pencil.Gaming.MathUtils
+open System.Collections.Generic
 (*
 Each cube thinks that it is the unit cube between (1,1,1) and (2,2,2).
 The 'size' field is the actual size of the cube - size = 0 is a single (Full) voxel.
@@ -50,7 +51,7 @@ type SparseVoxelOctree<'a when 'a : equality>(size : int, nodes_ : SparseVoxelNo
 
             | Full a when size = 0 -> this.Nodes <- Full element // at minimum resolution, fill in the voxel
 
-            | Full a -> // need to subdivide
+            | Full a ->
                 let arr = Array.init 8 (fun _ -> SparseVoxelOctree (size-1, Full a))
 
                 // now we have split the full node into 8 full subnodes we can actually add our point
@@ -65,13 +66,15 @@ type SparseVoxelOctree<'a when 'a : equality>(size : int, nodes_ : SparseVoxelNo
              | _ -> // We're in an invalid state
                 raise (new System.InvalidOperationException())
 
-    member this.ClosestVoxel position =
-        match this.Nodes with
-            | Subdivided arr ->
-                let newQuadrant = this.WhichOctant position
-                let newPosition = (position + originDiff newQuadrant) * 2.f
-                arr.[newQuadrant].ClosestVoxel position
-            | Full a         -> a
+    member this.Item
+        with get (path : int list) =
+                match path with
+                    | [] -> this
+                    | head :: path ->
+                        match this.Nodes with
+                            | Full a         -> this
+                            | Subdivided arr -> arr.[head].[path]
+
 
 (*
 The idea is that there's no such thing as an 'empty' node. To reclaim this, simply use Option<a> for your type, where None represents empty space.
@@ -81,8 +84,12 @@ and SparseVoxelNode<'a when 'a : equality> =
     | Subdivided of SparseVoxelOctree<'a>[] // should always have length 8
 
 let minimalSVO =
-    let empty = new SparseVoxelOctree<Block>(2, Full Transparent)
-    empty.Insert (new Vector3 (1.99f, 1.99f, 1.99f)) Translucent
-    empty.Insert (new Vector3 (1.01f, 1.01f, 1.01f)) Opaque
+    (*
+    let empty = SparseVoxelOctree<Option<Block>>(2, Full None)
+    empty.Insert (new Vector3 (1.99f, 1.99f, 1.99f)) (Some Translucent)
+    empty.Insert (new Vector3 (1.01f, 1.01f, 1.01f)) (Some Opaque)
     empty
+    *)
+    SparseVoxelOctree<Option<Block>>(2, Full (Some Opaque))
+
     

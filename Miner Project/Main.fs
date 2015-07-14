@@ -1,6 +1,6 @@
 ﻿module Main
 
-open Miner.Graphics.Render
+open Miner.Graphics.Game
 
 open Pencil.Gaming
 
