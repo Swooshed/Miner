@@ -82,18 +82,15 @@ let rayIntersections (origin       : Vector3)
         | Full (Some element) ->
             // Now we're looking at quadrants on the face of this large cube.
             // We can assume that there IS a collision.
-            let tHit = let getMin axis = tParent axis -2.f
-                       Array.max [| getMin X; getMin Y; getMin Z |]
+            let tHit =
+                let getMin axis = tParent axis -2.f
+                Array.max [| getMin X; getMin Y; getMin Z |]
             let absoluteHitPosition : Vector3 = origin + tHit * direction
             let planeHit = 
-                match mapVector3T (fun f -> abs (2.f - f) < eps) absoluteHitPosition with
-                | (true, _, _) -> X
-                | (_, true, _) -> Y
-                | (_, _, true) -> Z
-                | _ -> 
-                    printfn "absoluteHitPosition = %A" absoluteHitPosition
-                    printfn "eps = %f" eps
-                    raise (new System.Exception ("The hit position isn't on the upper edge of the cube."))
+                let distanceFromCube = mapVector3 (fun f -> abs (2.f - f)) absoluteHitPosition
+                if distanceFromCube.X > distanceFromCube.Y
+                    then if distanceFromCube.Z > distanceFromCube.X then Z else X
+                    else if distanceFromCube.Z > distanceFromCube.Y then Z else Y
 
             let relativeHitPosition = absoluteHitPosition - Vector3(1.f)
             let singleVoxelWidth : float32 = 1.f/float32 (parent.Size + 1)

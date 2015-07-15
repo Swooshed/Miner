@@ -22,7 +22,7 @@ type ViewCamera (origin, offset, fov, window, svo : SparseVoxelOctree<Option<Blo
     let mutable lastTime       = Glfw.GetTime ()
 
     // constants
-    let rotateSpeed   = 0.5f
+    let rotateSpeed   = 1.f
     let pitchSpeed    = 2.f
     let panSpeed      = 3.f
     let scrollSpeed   = 1.f
@@ -103,9 +103,11 @@ type ViewCamera (origin, offset, fov, window, svo : SparseVoxelOctree<Option<Blo
             let hDelta = rotateSpeed * dt * (float32 width/2.f - float32 xpos)
             let vDelta = pitchSpeed * dt * (float32 height/2.f - float32 ypos)
 
+            offset <- Vector3.TransformVector (offset, Matrix.CreateRotationX vDelta)
             offset <- Vector3.TransformVector (offset, Matrix.CreateRotationY hDelta)
-            offset.Y <- offset.Y - vDelta
+            
             // TODO: rotate viewOffset around (rotated) the X axis instead.
+            //   OR: maintain a distance of 1 from
             
         let moveForward = Vector3.Normalize(new Vector3 (-offset.X, 0.f, -offset.Z))
         let slideLeft = Vector3.TransformVector (moveForward, Matrix.CreateRotationY (pi/2.f))
