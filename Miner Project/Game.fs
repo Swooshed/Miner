@@ -34,7 +34,7 @@ type Game () =
         GL.ClearColor Color4.DarkBlue
         GL.Enable EnableCap.DepthTest
         GL.DepthFunc DepthFunction.Less
-        //GL.Enable EnableCap.CullFace // FIXME: the winding of the cube is wrong
+        GL.Enable EnableCap.CullFace
     
 
     // Set up VBOs
@@ -68,14 +68,14 @@ type Game () =
             let initialModel = MathUtils.Matrix.Identity
             renderer.Draw svo vp
 
-            let pathO = camera.SelectedVoxel
-            Option.iter (fun (path:DoubleEndedList<int>) ->
-                printf "path = "
+            Option.iter
+                (fun (path:DoubleEndedList<int>) ->
+                    printf "path = "
 
-                path.iter (fun n -> let (bx, by, bz) = octToBools n
-                                    printf "(%i, %i, %i) " (intIf bx) (intIf by) (intIf bz))
-                printfn "") pathO
-
+                    path.iter (fun n -> let (bx, by, bz) = octToBools n
+                                        printf "(%i, %i, %i) " (intIf bx) (intIf by) (intIf bz))
+                    printfn "")
+                camera.SelectedVoxel
 
             Glfw.SwapBuffers window
             Glfw.PollEvents ()

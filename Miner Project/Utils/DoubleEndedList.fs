@@ -14,6 +14,7 @@ type DoubleEndedList<'a> (front : 'a list, back : 'a list) =
         match front with 
         | []   -> mergeToFront (); List.head front
         | x::_ -> x
+
     member this.last () =
         match back with 
         | []   -> mergeToBack (); List.head back
@@ -24,10 +25,7 @@ type DoubleEndedList<'a> (front : 'a list, back : 'a list) =
 
     // Could probably make this a member of IEumerable or IList if needed.
     member this.map f = DoubleEndedList (List.map f front, List.map f back)
-    member this.iter f =
-        List.iter f front
-        List.iter f (List.rev back)
-
+    member this.iter f = List.iter f front; List.iter f (List.rev back)
     member this.empty () = front.IsEmpty && back.IsEmpty
     
     new ()     = DoubleEndedList ([]   , [])

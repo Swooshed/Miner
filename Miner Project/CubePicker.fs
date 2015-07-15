@@ -57,7 +57,7 @@ let rayIntersections (origin       : Vector3)
     let rec rayIntersectionsGo (parent : SparseVoxelOctree<Option<'a>>)
                                (pathSoFar : DoubleEndedList<int>)
                                origin =
-        if parent.Size = 0 then Some (DoubleEndedList ()) else
+        if parent.Size = 0 then Some pathSoFar else
         let tBias = zipVector3With (*) tCoeff origin
         let tParent axis x = tCoeff.[axisIx axis] * x + tBias.[axisIx axis]
 
@@ -66,7 +66,7 @@ let rayIntersections (origin       : Vector3)
         | Subdivided arr -> 
                             
             let octants = 
-                let firstOctant  = octantMask ^^^ raise (new System.NotImplementedException ())
+                let firstOctant  = octantMask ^^^ raise (new System.NotImplementedException ()) // FIXME:
                 let (bx, by, bz) = octToBools firstOctant
                 let lowerEdge b  = if b then 1.f else 1.5f
                 let otherOctants =  []
