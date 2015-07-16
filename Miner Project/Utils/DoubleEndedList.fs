@@ -1,5 +1,7 @@
 ﻿module Miner.Utils.DoubleEndedList
 
+// TODO: is this needed at all? Or do we only cons in use and then reverse once?
+
 type DoubleEndedList<'a> (front : 'a list, back : 'a list) =
     let mutable front = front
     let mutable back  = back

@@ -62,14 +62,14 @@ let rayIntersections (origin       : Vector3)
         match parent.Nodes with
         | Full None      -> None
         | Subdivided arr -> 
-                            
+            if true then None else // FIXME: this is very very temporary
             let octants = 
-                let firstOctant  = octantMask ^^^ raise (
-                 System.NotImplementedException ()) // FIXME:
-                let (bx, by, bz) = octToBools firstOctant
-                let lowerEdge b  = if b then 1.f else 1.5f
-                let otherOctants =  []
-                firstOctant :: otherOctants
+//                let firstOctant  = octantMask ^^^ raise (System.NotImplementedException ()) // FIXME:
+//                let (bx, by, bz) = octToBools firstOctant
+//                let lowerEdge b  = if b then 1.f else 1.5f
+//                let otherOctants =  []
+//                firstOctant :: otherOctants
+                [7;6;5;4;3;2;1;0]
                 
             let onOctant octant =
                 let child = arr.[octant]

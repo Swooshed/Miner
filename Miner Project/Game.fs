@@ -45,7 +45,7 @@ type Game () =
     let matrixID = GL.GetUniformLocation (programID, "MVP")
 
     let renderer = SVORenderer matrixID
-    let mutable svo = minimalSVO
+    let mutable svo = emptyWorld
     let camera = ViewCamera(window, svo)
 
 // FIXME: this is crashing when called

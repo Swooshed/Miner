@@ -55,7 +55,7 @@ type ViewCamera (origin, rho, theta, fov, window, svo : SparseVoxelOctree<Option
             if action = KeyAction.Release then
                 match savedCursorPos with
                     | Some (xpos, ypos) -> Glfw.SetCursorPos (window, xpos, ypos)
-                    | None              -> raise (System.InvalidOperationException("cameraMoveKey released before it is pressed"))
+                    | None              -> raise (System.InvalidOperationException "cameraMoveKey released before it is pressed")
     do  Glfw.SetMouseButtonCallback (window, GlfwMouseButtonFun mouseButtonCallback) |> ignore
 
     let mousePosCallback window_ mouseX mouseY =
@@ -112,7 +112,7 @@ type ViewCamera (origin, rho, theta, fov, window, svo : SparseVoxelOctree<Option
             Glfw.SetCursorPos (window, float (width/2), float (height/2))
 
             let newRho = rho + pitchSpeed * dt * (float32 height/2.f - float32 ypos)
-            if newRho > 0.f && newRho < pi then rho <- newRho else ()
+            if newRho > 0.f && newRho < pi then rho <- newRho
             theta <- (theta - rotateSpeed * dt * (float32 width/2.f - float32 xpos)) % (2.f*pi)
 
         let moveForward = Vector3.Normalize(Vector3 (-this.EyeOffset.X, 0.f, -this.EyeOffset.Z))
