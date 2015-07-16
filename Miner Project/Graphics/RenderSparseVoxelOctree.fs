@@ -9,7 +9,7 @@ open Pencil.Gaming.Graphics
 open Pencil.Gaming.MathUtils
 
 type SVORenderer (matrixID) =
-    let cube = new ObjVBO ("Resources/gl_cube.obj") 
+    let cube = ObjVBO "Resources/gl_cube.obj"
     let textureID = GL.Utils.LoadImage "Resources/gl_uvmap.bmp"
 
     member this.DrawFrom  (m : Matrix) (svo : SparseVoxelOctree<Option<Block>>) (vp : Matrix) =

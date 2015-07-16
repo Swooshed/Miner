@@ -64,7 +64,8 @@ let rayIntersections (origin       : Vector3)
         | Subdivided arr -> 
                             
             let octants = 
-                let firstOctant  = octantMask ^^^ raise (new System.NotImplementedException ()) // FIXME:
+                let firstOctant  = octantMask ^^^ raise (
+                 System.NotImplementedException ()) // FIXME:
                 let (bx, by, bz) = octToBools firstOctant
                 let lowerEdge b  = if b then 1.f else 1.5f
                 let otherOctants =  []

@@ -6,6 +6,6 @@ open Pencil.Gaming
 
 [<EntryPoint>]
 let main argv =
-    let game = new Game()
+    let game = Game()
     do game.Run()
     0

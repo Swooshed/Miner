@@ -40,7 +40,7 @@ type SparseVoxelOctree<'a when 'a : equality>(size : int, nodes_ : SparseVoxelNo
 
     member this.Insert position (element : 'a) =
         if not (this.InRelativeBounds position) then
-            raise (new System.IndexOutOfRangeException("The position was not contained inside the cube."))
+            raise (System.IndexOutOfRangeException "The position was not contained inside the cube.")
         let insertIntoChild (arr : SparseVoxelOctree<'a>[]) =
             let newQuadrant = this.WhichOctant position
             let newPosition = (position + originDiff newQuadrant) * 2.f
@@ -64,7 +64,7 @@ type SparseVoxelOctree<'a when 'a : equality>(size : int, nodes_ : SparseVoxelNo
                     this.Nodes <- Full element
 
              | _ -> // We're in an invalid state
-                raise (new System.InvalidOperationException())
+                raise (System.InvalidOperationException())
 
     member this.Item
         with get (path : int list) =
@@ -86,8 +86,8 @@ and SparseVoxelNode<'a when 'a : equality> =
 let minimalSVO =
     (*
     let empty = SparseVoxelOctree<Option<Block>>(2, Full None)
-    empty.Insert (new Vector3 (1.99f, 1.99f, 1.99f)) (Some Translucent)
-    empty.Insert (new Vector3 (1.01f, 1.01f, 1.01f)) (Some Opaque)
+    empty.Insert (Vector3 (1.99f, 1.99f, 1.99f)) (Some Translucent)
+    empty.Insert (Vector3 (1.01f, 1.01f, 1.01f)) (Some Opaque)
     empty
     *)
     SparseVoxelOctree<Option<Block>>(2, Full (Some Opaque))
