@@ -120,6 +120,7 @@
     <Content Include="Resources\gl_uvmap.bmp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Resources\names.txt" />
     <Compile Include="Graphics\ViewCamera.fs" />
     <Compile Include="Graphics\RenderSparseVoxelOctree.fs" />
     <Compile Include="Game.fs" />
