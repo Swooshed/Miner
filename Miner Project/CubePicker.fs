@@ -15,7 +15,7 @@ let rayIntersections (origin       : Vector3)
                      (svo          : SparseVoxelOctree<Option<'a>>) = 
     // if the top level is full of nothing, then there can be no collisions
     if svo.Nodes = Full None then None else
-
+    
     // first, do a bunch of initialisation including setting up the constants
     let eps = 0.01f // 2.f ** (- float32 svo.Size)
     let floorEps (x : float32) =
@@ -33,15 +33,12 @@ let rayIntersections (origin       : Vector3)
 
     let tCoeff     = mapVector3 (fun x -> 1.f / abs x) direction
     let tBiasTemp  = zipVector3With (*) tCoeff origin
-    let invertIf b bias coeff = if b then bias else 3.f * coeff - bias
+    let invertIf b bias coeff = if b then 3.f * coeff - bias else bias
     let tBiasInitial = Vector3 (invertIf xIsPos tBiasTemp.X tCoeff.X,
                                 invertIf yIsPos tBiasTemp.Y tCoeff.Y,
                                 invertIf zIsPos tBiasTemp.Z tCoeff.Z)
 
     let tMinInitial = max (0.f, maxVector3 (2.f * tCoeff - tBiasInitial))
-    let (h, tMaxInitial) = 
-        let h = minVector3 (tCoeff - tBiasInitial)
-        (h, min (h, 1.f))
 
     let tSVO axis x = tCoeff.[axisIx axis] * x + tBiasInitial.[axisIx axis]
 
@@ -50,6 +47,7 @@ let rayIntersections (origin       : Vector3)
                Array.max [| getMin X; getMin Y; getMin Z |]
     let tMax = let getMax axis = tSVO axis 1.f
                Array.min [| getMax X; getMax Y; getMax Z |]
+    //System.Console.ReadLine() |> ignore
     if tMin <= tMax then printfn "No hit in initialisation"; None else
     printfn "Hit in initialisation"
     // FIXME: always triggers
@@ -86,6 +84,7 @@ let rayIntersections (origin       : Vector3)
                 let getMin axis = tParent axis -2.f
                 Array.max [| getMin X; getMin Y; getMin Z |]
             let absoluteHitPosition : Vector3 = origin + tHit * direction
+            printfn "hitPos: (%f, %f, %f)" absoluteHitPosition.X absoluteHitPosition.Y absoluteHitPosition.Z
             let planeHit = 
                 let distanceFromCube = mapVector3 (fun f -> abs (2.f - f)) absoluteHitPosition
                 if distanceFromCube.X > distanceFromCube.Y
