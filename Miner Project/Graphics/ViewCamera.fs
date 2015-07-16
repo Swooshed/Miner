@@ -1,5 +1,7 @@
 ﻿module Miner.ViewCamera
 
+// This is the third person camera for overhead viewing of the world.
+
 open Pencil.Gaming
 open Pencil.Gaming.MathUtils
 
@@ -11,15 +13,18 @@ open Miner.Utils.Misc
 
 let pi = float32 System.Math.PI
 
-type ViewCamera (origin, offset, fov, window, svo : SparseVoxelOctree<Option<Block>>) =
+type ViewCamera (origin, rho, theta, fov, window, svo : SparseVoxelOctree<Option<Block>>) =
     let mutable origin         = origin
-    let mutable offset         = offset
+    let mutable rho            = rho
+    let mutable theta          = theta
     let mutable fov            = fov
     let mutable view           = Matrix.Identity
     let mutable projection     = Matrix.Identity
     let mutable selected       = None : Option<DoubleEndedList<int>>
     let mutable savedCursorPos = None
     let mutable lastTime       = Glfw.GetTime ()
+
+
 
     // constants
     let rotateSpeed   = 1.f
@@ -32,7 +37,7 @@ type ViewCamera (origin, offset, fov, window, svo : SparseVoxelOctree<Option<Blo
     let scrollCallback window_ dx dy =
         if window_ = window then
             origin <- origin + Vector3.UnitY * float32 dy * scrollSpeed
-    do  Glfw.SetScrollCallback (window, new GlfwScrollFun (scrollCallback)) |> ignore
+    do  Glfw.SetScrollCallback (window, GlfwScrollFun scrollCallback) |> ignore
 
     // on cameraMoveKey press, save cursor position and set it to the center of the screen.
     // on cameraMoveKey release, restore cursor position
@@ -51,7 +56,7 @@ type ViewCamera (origin, offset, fov, window, svo : SparseVoxelOctree<Option<Blo
                 match savedCursorPos with
                     | Some (xpos, ypos) -> Glfw.SetCursorPos (window, xpos, ypos)
                     | None              -> raise (new System.InvalidOperationException("cameraMoveKey released before it is pressed"))
-    do  Glfw.SetMouseButtonCallback (window, new GlfwMouseButtonFun (mouseButtonCallback)) |> ignore
+    do  Glfw.SetMouseButtonCallback (window, GlfwMouseButtonFun mouseButtonCallback) |> ignore
 
     let mousePosCallback window_ mouseX mouseY =
         if window_ = window && not (Glfw.GetMouseButton (window, cameraMoveKey)) then
@@ -79,13 +84,20 @@ type ViewCamera (origin, offset, fov, window, svo : SparseVoxelOctree<Option<Blo
     // defaults for testing
     new (window_, svo) =
         ViewCamera (new Vector3 (0.f, 0.f, 5.f),
-                    new Vector3 (0.f, 1.f, 3.f),
+                    pi/2.f,
+                    pi/2.f,
                     pi/4.f,
                     window_,
                     svo)
 
+    member this.EyePosition
+        with get () = this.Origin + this.EyeOffset
+
+    member this.EyeOffset
+        with get () = Vector3 (sin rho * cos theta, cos rho, sin rho * sin theta)
+    
     member this.Origin
-        with get () = origin + offset
+        with get () = origin
 
     member this.handleInput () =
         let currentTime = Glfw.GetTime ()
@@ -96,21 +108,14 @@ type ViewCamera (origin, offset, fov, window, svo : SparseVoxelOctree<Option<Blo
         //    vertical mouse movement will tilt the view
         if Glfw.GetMouseButton (window, cameraMoveKey) then
             let xpos, ypos = Glfw.GetCursorPos window
-
             let width, height = Glfw.GetWindowSize window
-
             Glfw.SetCursorPos (window, float (width/2), float (height/2))
-            let hDelta = rotateSpeed * dt * (float32 width/2.f - float32 xpos)
-            let vDelta = pitchSpeed * dt * (float32 height/2.f - float32 ypos)
 
-            offset <- Vector3.TransformVector (offset, Matrix.CreateRotationY hDelta)
+            let newRho = rho + pitchSpeed * dt * (float32 height/2.f - float32 ypos)
+            if newRho > 0.f && newRho < pi then rho <- newRho else ()
+            theta <- (theta - rotateSpeed * dt * (float32 width/2.f - float32 xpos)) % (2.f*pi)
 
-            // TODO: instead of just +-Y here, go to a point on the upright unit circle, rotated by hDelta and around the origin
-            offset.Y <- offset.Y - vDelta
-            
-            
-            
-        let moveForward = Vector3.Normalize(new Vector3 (-offset.X, 0.f, -offset.Z))
+        let moveForward = Vector3.Normalize(new Vector3 (-this.EyeOffset.X, 0.f, -this.EyeOffset.Z))
         let slideLeft = Vector3.TransformVector (moveForward, Matrix.CreateRotationY (pi/2.f))
 
         let panMult = dt * panSpeed
@@ -127,8 +132,9 @@ type ViewCamera (origin, offset, fov, window, svo : SparseVoxelOctree<Option<Blo
         if Glfw.GetKey (window, Key.PageDown) then
             origin <- origin - Vector3.UnitY * panMult
 
-
-        view <- MathUtils.Matrix.LookAt (origin + offset, origin, Vector3.UnitY)
+            //offset <- Vector3.TransformVector (offset, Matrix.CreateRotationY hDelta)
+        
+        view <- MathUtils.Matrix.LookAt (this.EyePosition, this.Origin, Vector3.UnitY)
         projection <- MathUtils.Matrix.CreatePerspectiveFieldOfView (fov, 4.f/3.f, 0.1f, 100.f)
         lastTime <- currentTime
 
