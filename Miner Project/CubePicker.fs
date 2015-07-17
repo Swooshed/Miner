@@ -2,7 +2,6 @@
 
 open Miner.Blocks
 open Miner.SparseVoxelOctree
-open Miner.Utils.DoubleEndedList
 open Miner.Utils.Misc
 
 open FSharpx.Option
@@ -10,8 +9,8 @@ open Pencil.Gaming.MathUtils
 open System.Linq.Expressions
 
 
-let rayIntersections (origin       : Vector3)
-                     (directionRaw : Vector3)
+let rayIntersections (origin       : Vector4)
+                     (directionRaw : Vector4)
                      (svo          : SparseVoxelOctree<Option<'a>>) = 
     // if the top level is full of nothing, then there can be no collisions
     if svo.Nodes = Full None then None else
@@ -22,23 +21,24 @@ let rayIntersections (origin       : Vector3)
         if abs x < eps
             then eps * float32 (sign x)
             else if x = 0.f then eps else x
-    let direction  = mapVector3 floorEps directionRaw                                       
+    let direction  = mapVector floorEps directionRaw                                       
 
-    let (xIsPos, yIsPos, zIsPos) = mapVector3T (fun x -> sign x = 1) direction
+    let (xIsPos, yIsPos, zIsPos) = mapVectorT (fun x -> sign x = 1) direction
 
     // we'll switch the axis such that all three components of direction is negative
     // the cheapest way to do this is trasform which child we fetch with indexing by
     // xoring it with octantMask
     let octantMask = boolsToOct (xIsPos, yIsPos, zIsPos)
 
-    let tCoeff     = mapVector3 (fun x -> 1.f / abs x) direction
-    let tBiasTemp  = zipVector3With (*) tCoeff origin
+    let tCoeff     = mapVector (fun x -> 1.f / abs x) direction
+    let tBiasTemp  = zipVectorWith (*) tCoeff origin
     let invertIf b bias coeff = if b then 3.f * coeff - bias else bias
-    let tBiasInitial = Vector3 (invertIf xIsPos tBiasTemp.X tCoeff.X,
+    let tBiasInitial = Vector4 (invertIf xIsPos tBiasTemp.X tCoeff.X,
                                 invertIf yIsPos tBiasTemp.Y tCoeff.Y,
-                                invertIf zIsPos tBiasTemp.Z tCoeff.Z)
+                                invertIf zIsPos tBiasTemp.Z tCoeff.Z,
+                                1.f)
 
-    let tMinInitial = max (0.f, maxVector3 (2.f * tCoeff - tBiasInitial))
+    let tMinInitial = max (0.f, maxVector (2.f * tCoeff - tBiasInitial))
 
     let tSVO axis x = tCoeff.[axisIx axis] * x + tBiasInitial.[axisIx axis]
 
@@ -53,10 +53,10 @@ let rayIntersections (origin       : Vector3)
     // FIXME: always triggers
 
     let rec rayIntersectionsGo (parent : SparseVoxelOctree<Option<'a>>)
-                               (pathSoFar : DoubleEndedList<int>)
+                               (pathSoFar : List<int>)
                                origin =
         if parent.Size = 0 then Some pathSoFar else
-        let tBias = zipVector3With (*) tCoeff origin
+        let tBias = zipVectorWith (*) tCoeff origin
         let tParent axis x = tCoeff.[axisIx axis] * x + tBias.[axisIx axis]
 
         match parent.Nodes with
@@ -73,8 +73,8 @@ let rayIntersections (origin       : Vector3)
                 
             let onOctant octant =
                 let child = arr.[octant]
-                let newOrigin = originDiff octant + origin
-                rayIntersectionsGo child (pathSoFar.cons octant) newOrigin
+                let newOrigin = origin * toChildSpace octant
+                rayIntersectionsGo child (octant :: pathSoFar) newOrigin
 
             List.tryPick onOctant octants
 
@@ -84,17 +84,17 @@ let rayIntersections (origin       : Vector3)
             let tHit =
                 let getMin axis = tParent axis -2.f
                 Array.max [| getMin X; getMin Y; getMin Z |]
-            let absoluteHitPosition : Vector3 = origin + tHit * direction
+            let absoluteHitPosition : Vector4 = origin + tHit * direction
             printfn "hitPos: (%f, %f, %f)" absoluteHitPosition.X absoluteHitPosition.Y absoluteHitPosition.Z
             let planeHit = 
-                let distanceFromCube = mapVector3 (fun f -> abs (2.f - f)) absoluteHitPosition
+                let distanceFromCube = mapVector (fun f -> abs (2.f - f)) absoluteHitPosition
                 if distanceFromCube.X > distanceFromCube.Y
                     then if distanceFromCube.Z > distanceFromCube.X then Z else X
                     else if distanceFromCube.Z > distanceFromCube.Y then Z else Y
 
-            let relativeHitPosition = absoluteHitPosition - Vector3(1.f)
+            let relativeHitPosition = absoluteHitPosition - Vector4(1.f)
             let singleVoxelWidth : float32 = 1.f/float32 (parent.Size + 1)
-            let (voxelsX, voxelsY, voxelsZ) = mapVector3T (fun f -> int (f / singleVoxelWidth)) relativeHitPosition
+            let (voxelsX, voxelsY, voxelsZ) = mapVectorT (fun f -> int (f / singleVoxelWidth)) relativeHitPosition
 
             // turn this into a path
             let findDirection bit =
@@ -105,12 +105,12 @@ let rayIntersections (origin       : Vector3)
 
             // The path cannot be empty, as we know that parent.Size <> 0
             let path = List.map findDirection [parent.Size .. 1]
-            Some (DoubleEndedList path)
+            Some path
 
 
             
 
-    rayIntersectionsGo svo (DoubleEndedList ()) origin
-        |> Option.map (fun list -> list.map ((^^^) octantMask))
+    rayIntersectionsGo svo [] origin
+        |> Option.map (List.map ((^^^) octantMask) >> List.rev)
 
 

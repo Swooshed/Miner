@@ -7,9 +7,7 @@ open Pencil.Gaming.MathUtils
 let bufferSize (arr : 'T[]) = nativeint (sizeof<'T> * arr.Length)
 
 type ObjVBO (path : string) =
-    let mutable disposed       = false
-
-    // TODO: turn this into tuples somehow?
+    let mutable disposed             = false
     let mutable vertices : Vector4[] = [||]
     let mutable normals  : Vector3[] = [||]
     let mutable uvs      : Vector2[] = [||]

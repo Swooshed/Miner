@@ -20,9 +20,7 @@ type SVORenderer (matrixID) =
         GL.BindTexture (TextureTarget.Texture2D, textureID)
         GL.Uniform1 (textureID, 0)
 
-        let drawSubSVO quadrant subSVO =
-            let transform = Matrix.CreateTranslation (originDiff quadrant)
-            this.DrawFrom (transform * m) subSVO vp 
+        let drawSubSVO octant subSVO = this.DrawFrom (toChildSpace octant * m) subSVO vp 
 
         match svo.Nodes with
             | Full None      -> ()

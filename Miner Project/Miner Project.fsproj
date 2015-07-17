@@ -101,7 +101,6 @@
     <Compile Include="Utils\LoadShaders.fs" />
     <Compile Include="Utils\ObjVBO.fs" />
     <Compile Include="Utils\Misc.fs" />
-    <Compile Include="Utils\DoubleEndedList.fs" />
     <Compile Include="Blocks.fs" />
     <Compile Include="SparseVoxelOctree.fs" />
     <Compile Include="CubePicker.fs" />

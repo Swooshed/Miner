@@ -11,12 +11,6 @@ The 'size' field is the actual size of the cube - size = 0 is a single (Full) vo
 Size = 1 is either full or a node of 8 full voxels. And so on.
 *)
 
-// return a matrix which takes you to the relative coordinate system of the octant
-let octantMatrix n =
-    let translate = Matrix.CreateTranslation (originDiff n)
-    let scale = Matrix.CreateScale 2.f
-    scale * translate
-
 // maybe uint 16 or 8 for size instead? For which n does (2 ** max_uintn) fit into float32?
 type SparseVoxelOctree<'a when 'a : equality>(size : int, nodes_ : SparseVoxelNode<'a>) =
     let mutable nodes = nodes_
@@ -28,7 +22,7 @@ type SparseVoxelOctree<'a when 'a : equality>(size : int, nodes_ : SparseVoxelNo
     member this.AbsoluteRadius = 2.f ** float32 (size - 1)
 
     member this.InRelativeBounds position =
-        let (bx, by, bz) = mapVector3T(fun x -> 1.f < x && x < 2.f) position
+        let (bx, by, bz) = mapVectorT(fun x -> 1.f < x && x < 2.f) position
         bx && by && bz
 
     (*
@@ -36,11 +30,12 @@ type SparseVoxelOctree<'a when 'a : equality>(size : int, nodes_ : SparseVoxelNo
     These 8 octants are represented by a bool triple, indicating whether or not the point is ABOVE the three axes respectively. Then that (bool, bool, bool)
     is interpreted as a binary number to give a value between 0 (false, false, false), 1 (false, false, true), and 7 (true, true, true).
     *)
-    member this.WhichOctant = mapVector3T (fun x -> x > 1.5f) >> boolsToOct
+    member this.WhichOctant = mapVectorT (fun x -> x > 1.5f) >> boolsToOct
 
     member this.Insert position element = this.InsertLevel position 0 element
 
-    member this.InsertLevel position height (element : 'a) =
+    member this.InsertLevel (position : Vector4) height (element : 'a) =
+        printfn "inserting (%f, %f, %f) at size %i" position.X position.Y position.Z size
         if height < 0 then raise (System.ArgumentException "Can't add at a negative height.")
         if size < 0  then raise (System.ArgumentException "Can't have an octree with a negative size.")
         if height > size then
@@ -57,7 +52,7 @@ type SparseVoxelOctree<'a when 'a : equality>(size : int, nodes_ : SparseVoxelNo
         else // size > height, need to go smaller until we get to the right octree to insert into
             let insertIntoChild (arr : SparseVoxelOctree<'a>[]) =
                 let newQuadrant = this.WhichOctant position
-                let newPosition = (position + originDiff newQuadrant) * 2.f
+                let newPosition = position * toChildSpace newQuadrant
                 arr.[newQuadrant].InsertLevel newPosition height element
 
             match this.Nodes with
@@ -95,11 +90,13 @@ and SparseVoxelNode<'a when 'a : equality> =
 
 let emptyWorld =
     
-    let empty = SparseVoxelOctree<Option<Block>>(3, Full None)
-    empty.InsertLevel (Vector3 (1.99f, 1.99f, 1.99f)) 0 (Some Translucent)
-    empty.InsertLevel (Vector3 (1.01f, 1.01f, 1.01f)) 0 (Some Opaque)
-    empty
+    let empty = SparseVoxelOctree<Option<Block>>(2, Full None)
+    //let lowerHalf = List.map boolsToOct [(false, false, false); (false, false, true); (false, true, false); (false, true, true)]
+    
     
     //SparseVoxelOctree<Option<Block>>(2, Full (Some Opaque))
+    empty.InsertLevel (Vector4 (1.1f, 1.1f, 1.1f, 1.f)) 0 (Some Opaque)
+    empty.InsertLevel (Vector4 (1.9f, 1.9f, 1.9f, 1.f)) 0 (Some Opaque)
+    empty
 
     

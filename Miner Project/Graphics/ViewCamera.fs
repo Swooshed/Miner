@@ -8,7 +8,6 @@ open Pencil.Gaming.MathUtils
 open Miner.Blocks
 open Miner.CubePicker
 open Miner.SparseVoxelOctree
-open Miner.Utils.DoubleEndedList
 open Miner.Utils.Misc
 
 let pi = float32 System.Math.PI
@@ -20,7 +19,7 @@ type ViewCamera (origin, rho, theta, fov, window, svo : SparseVoxelOctree<Option
     let mutable fov            = fov
     let mutable view           = Matrix.Identity
     let mutable projection     = Matrix.Identity
-    let mutable selected       = None : Option<DoubleEndedList<int>>
+    let mutable stack          = None : Option<List<int>>
     let mutable savedCursorPos = None
     let mutable lastTime       = Glfw.GetTime ()
 
@@ -34,7 +33,7 @@ type ViewCamera (origin, rho, theta, fov, window, svo : SparseVoxelOctree<Option
     // scroll to move up and down
     let scrollCallback window_ dx dy =
         if window_ = window then
-            origin <- origin + Vector3.UnitY * float32 dy * scrollSpeed
+            origin <- origin + Vector4.UnitY * float32 dy * scrollSpeed
     do  Glfw.SetScrollCallback (window, GlfwScrollFun scrollCallback) |> ignore
 
     // on cameraMoveKey press, save cursor position and set it to the center of the screen.
@@ -72,28 +71,23 @@ type ViewCamera (origin, rho, theta, fov, window, svo : SparseVoxelOctree<Option
                 let invVP          = Matrix.Invert (view * projection)
                 let rayStartWorld  = normaliseW (rayStartModel * invVP)
                 let rayEndWorld    = normaliseW (rayEndModel * invVP)
-                Vector3.Normalize (Vector3 (rayEndWorld - rayStartWorld))
+                Vector4.Normalize (Vector4 (rayEndWorld - rayStartWorld))
             printfn "(%f, %f, %f) (%f, %f, %f)" origin.X origin.Y origin.Z rayDirection.X rayDirection.Y rayDirection.Z
-            selected <- rayIntersections origin rayDirection svo
-    do  Glfw.SetCursorPosCallback (window, GlfwCursorPosFun mousePosCallback) |> ignore
+            stack <- rayIntersections origin rayDirection svo
+    do Glfw.SetCursorPosCallback (window, GlfwCursorPosFun mousePosCallback) |> ignore
 
     // defaults for testing
-    new (window, svo) =
-        ViewCamera (Vector3 (0.f, 0.f, 5.f),
-                    pi/2.f,
-                    pi/2.f,
-                    pi/4.f,
-                    window,
-                    svo)
+    new (window, svo) = ViewCamera (Vector4 (0.f, 0.f, 5.f, 1.f), pi/2.f, pi/2.f, pi/4.f, window, svo)
+    new (window, svo, position) = ViewCamera (position, pi/2.f, pi/2.f, pi/4.f, window, svo)
 
     member this.EyePosition
         with get () = this.Origin + this.EyeOffset
     member this.EyeOffset
-        with get () = Vector3 (sin rho * cos theta, cos rho, sin rho * sin theta)
+        with get () = Vector4 (sin rho * cos theta, cos rho, sin rho * sin theta, 1.f)
     member this.Origin
         with get () = origin
     member this.SelectedVoxel
-        with get () = selected
+        with get () = stack
     member this.ViewMatrix
         with get () = view
     member this.ProjectionMatrix
@@ -112,11 +106,11 @@ type ViewCamera (origin, rho, theta, fov, window, svo : SparseVoxelOctree<Option
             Glfw.SetCursorPos (window, float (width/2), float (height/2))
 
             let newRho = rho + pitchSpeed * dt * (float32 height/2.f - float32 ypos)
-            if newRho > 0.f && newRho < pi then rho <- newRho
+            if 0.f < newRho && newRho < pi then rho <- newRho
             theta <- (theta - rotateSpeed * dt * (float32 width/2.f - float32 xpos)) % (2.f*pi)
 
-        let moveForward = Vector3.Normalize(Vector3 (-this.EyeOffset.X, 0.f, -this.EyeOffset.Z))
-        let slideLeft = Vector3.TransformVector (moveForward, Matrix.CreateRotationY (pi/2.f))
+        let moveForward = Vector4.Normalize(Vector4 (-this.EyeOffset.X, 0.f, -this.EyeOffset.Z, 0.f))
+        let slideLeft = moveForward * Matrix.CreateRotationY (pi/2.f)
 
         // respond to key presses
         let panMult = dt * panSpeed
@@ -129,12 +123,12 @@ type ViewCamera (origin, rho, theta, fov, window, svo : SparseVoxelOctree<Option
         if Glfw.GetKey (window, Key.Right) then
             origin <- origin - slideLeft * panMult
         if Glfw.GetKey (window, Key.PageUp) then
-            origin <- origin + Vector3.UnitY * panMult
+            origin <- origin + Vector4.UnitY * panMult
         if Glfw.GetKey (window, Key.PageDown) then
-            origin <- origin - Vector3.UnitY * panMult
+            origin <- origin - Vector4.UnitY * panMult
                    
         // finish up
-        view <- MathUtils.Matrix.LookAt (this.EyePosition, this.Origin, Vector3.UnitY)
+        view <- MathUtils.Matrix.LookAt (this.EyePosition.Xyz, this.Origin.Xyz, Vector3.UnitY)
         projection <- MathUtils.Matrix.CreatePerspectiveFieldOfView (fov, 4.f/3.f, 0.1f, 100.f)
         lastTime <- currentTime
 

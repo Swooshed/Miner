@@ -4,7 +4,6 @@
 open Miner.CubePicker
 open Miner.RenderSparseVoxelOctree
 open Miner.SparseVoxelOctree
-open Miner.Utils.DoubleEndedList
 open Miner.Utils.LoadShaders
 open Miner.Utils.Misc
 open Miner.Utils.ObjVBO
@@ -68,14 +67,15 @@ type Game () =
             let initialModel = MathUtils.Matrix.Identity
             renderer.Draw svo vp
 
-            Option.iter
-                (fun (path:DoubleEndedList<int>) ->
-                    printf "path = "
-
-                    path.iter (fun n -> let (bx, by, bz) = octToBools n
-                                        printf "(%i, %i, %i) " (intIf bx) (intIf by) (intIf bz))
-                    printfn "")
-                camera.SelectedVoxel
+//            Option.iter
+//                (fun (path:List<int>) ->
+//                    printf "path = "
+//
+//                    List.iter (fun n -> let (bx, by, bz) = octToBools n
+//                                        printf "(%i, %i, %i) " (intIf bx) (intIf by) (intIf bz))
+//                              path
+//                    printfn "") 
+//                (camera.SelectedVoxel : Option<List<int>>)
 
             Glfw.SwapBuffers window
             Glfw.PollEvents ()
