@@ -63,8 +63,12 @@ type ViewCamera (origin, rho, theta, fov, window, svo : SparseVoxelOctree<Option
             // Calculate the ray that goes between the view and the mouse cursor
             let rayDirection =
                 let width, height  = Glfw.GetWindowSize window
+
+                // Relative screen coords between (-1, -1) and (1, 1)
                 let relativeMouseX = (float32 mouseX/ float32 width - 0.5f) * 2.f
                 let relativeMouseY = (float32 mouseY/ float32 height - 0.5f) * 2.f
+
+                // 
                 let rayStartModel  = Vector4 (relativeMouseX, relativeMouseY, -1.f, 1.f)
                 let rayEndModel    = Vector4 (relativeMouseX, relativeMouseY,  0.f, 1.f)
                 let normaliseW (v : Vector4) = v / v.W
@@ -131,8 +135,6 @@ type ViewCamera (origin, rho, theta, fov, window, svo : SparseVoxelOctree<Option
         view <- MathUtils.Matrix.LookAt (this.EyePosition.Xyz, this.Origin.Xyz, Vector3.UnitY)
         projection <- MathUtils.Matrix.CreatePerspectiveFieldOfView (fov, 4.f/3.f, 0.1f, 100.f)
         lastTime <- currentTime
-
-        (projection, view)
 
 
 

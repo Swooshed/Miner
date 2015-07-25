@@ -41,7 +41,7 @@ type Game() =
     let programID = loadShaders "Resources/SimpleVertexShader.glsl" "Resources/SimpleFragmentShader.glsl"
     let matrixID = GL.GetUniformLocation(programID, "MVP")
     let renderer = SVORenderer matrixID
-    let mutable svo = emptyWorld
+    let mutable svo = exampleWorld
     let camera = ViewCamera(window, svo)
     // FIXME: this is crashing when called
     //    interface System.IDisposable with
@@ -57,8 +57,8 @@ type Game() =
         while not (Glfw.WindowShouldClose window) do
             GL.Clear(ClearBufferMask.ColorBufferBit ||| ClearBufferMask.DepthBufferBit)
             GL.UseProgram programID
-            let (projection, view) = camera.handleInput()
-            let vp = view * projection
+            camera.handleInput()
+            let vp = camera.ViewMatrix * camera.ProjectionMatrix
             let initialModel = MathUtils.Matrix.Identity
             renderer.Draw svo vp
             //            Option.iter

@@ -8,5 +8,4 @@ open Pencil.Gaming.MathUtils
 let main argv = 
     let game = Game()
     do game.Run()
-    //System.Console.ReadLine () |> ignore
     0
