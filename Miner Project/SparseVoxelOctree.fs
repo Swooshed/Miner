@@ -61,19 +61,14 @@ type SparseVoxelOctree<'a when 'a : equality>(size : int, nodes_ : SparseVoxelNo
                 // now we have split the full node into 8 full subnodes we can actually add our point
                 insertIntoChild arr
                 this.Nodes <- Subdivided arr
-            | Subdivided arr -> // Recurse, and if we fill a node up then replace it with a Full
+            | Subdivided arr ->
+                // Recurse, and then if all the nodes are full with the same element we can combine them.
                 insertIntoChild arr
-                this.collapseTopLevel ()
-
-    member this.collapseTopLevel () =
-        match this.Nodes with
-        | Subdivided arr -> 
-            match arr.[0].Nodes with
-            | Full element ->
-                if Array.forall (fun (x : SparseVoxelOctree<'a>) -> x.Nodes = Full element) arr then 
-                    this.Nodes <- Full element
-            | _ -> ()
-        | _ -> ()
+                match arr.[0].Nodes with
+                | Full element ->
+                    if Array.forall (fun (x : SparseVoxelOctree<'a>) -> x.Nodes = Full element) arr then 
+                        this.Nodes <- Full element
+                | _ -> ()
  
     member this.Item 
         with get (path : int list) = 
