@@ -61,14 +61,8 @@ type Game() =
             let vp = camera.ViewMatrix * camera.ProjectionMatrix
             let initialModel = MathUtils.Matrix.Identity
             renderer.Draw svo vp
-            //            Option.iter
-            //                (fun (path:List<int>) ->
-            //                    printf "path = "
-            //
-            //                    List.iter (fun n -> let (bx, by, bz) = octToBools n
-            //                                        printf "(%i, %i, %i) " (intIf bx) (intIf by) (intIf bz))
-            //                              path
-            //                    printfn "") 
-            //                (camera.SelectedVoxel : Option<List<int>>)
+
+            //printfn "hit position: %A" camera.HitPosition
+
             Glfw.SwapBuffers window
             Glfw.PollEvents()

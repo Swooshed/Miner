@@ -3,7 +3,9 @@
 // This is the third person camera for overhead viewing of the world.
 
 open Pencil.Gaming
+open Pencil.Gaming.Graphics
 open Pencil.Gaming.MathUtils
+
 
 open Miner.Blocks
 open Miner.CubePicker
@@ -19,7 +21,7 @@ type ViewCamera (origin, rho, theta, fov, window, svo : SparseVoxelOctree<Option
     let mutable fov            = fov
     let mutable view           = Matrix.Identity
     let mutable projection     = Matrix.Identity
-    let mutable stack          = None : Option<List<int>>
+    let mutable hitPosition    = None
     let mutable savedCursorPos = None
     let mutable lastTime       = Glfw.GetTime ()
 
@@ -57,27 +59,24 @@ type ViewCamera (origin, rho, theta, fov, window, svo : SparseVoxelOctree<Option
                     | None              -> raise (System.InvalidOperationException "cameraMoveKey released before it is pressed")
     do  Glfw.SetMouseButtonCallback (window, GlfwMouseButtonFun mouseButtonCallback) |> ignore
 
-    let mousePosCallback window_ mouseX mouseY =
+    let mousePosCallback window_ fmouseX fmouseY =
         if window_ = window && not (Glfw.GetMouseButton (window, cameraMoveKey)) then
+            let mouseX = float32 fmouseX
+            let mouseY = float32 fmouseY
 
             // Calculate the ray that goes between the view and the mouse cursor
-            let rayDirection =
-                let width, height  = Glfw.GetWindowSize window
+            let width, height = Glfw.GetWindowSize window
+            let nearWinCoords = Vector3 (mouseX, mouseY, 0.f)
+            let farWinCoords  = Vector3 (mouseX, mouseY, 1.f)
+            let modelView     = view
+                
+            let mutable getParams = [| 0;0;0;0 |]
+            GL.GetInteger (GetPName.Viewport, getParams)
+            let viewport = Rectanglei (getParams.[0], getParams.[1], getParams.[2], getParams.[3])
+            let positionNear = Vector4 (GL.Utils.UnProject (nearWinCoords, modelView, projection, viewport), 1.f)
+            let positionFar = Vector4 (GL.Utils.UnProject (farWinCoords, modelView, projection, viewport), 1.f)
+            hitPosition <- rayHit positionNear (positionFar - positionNear) svo
 
-                // Relative screen coords between (-1, -1) and (1, 1)
-                let relativeMouseX = (float32 mouseX/ float32 width - 0.5f) * 2.f
-                let relativeMouseY = (float32 mouseY/ float32 height - 0.5f) * 2.f
-
-                // 
-                let rayStartModel  = Vector4 (relativeMouseX, relativeMouseY, -1.f, 1.f)
-                let rayEndModel    = Vector4 (relativeMouseX, relativeMouseY,  0.f, 1.f)
-                let normaliseW (v : Vector4) = v / v.W
-                let invVP          = Matrix.Invert (view * projection)
-                let rayStartWorld  = normaliseW (rayStartModel * invVP)
-                let rayEndWorld    = normaliseW (rayEndModel * invVP)
-                Vector4.Normalize (Vector4 (rayEndWorld - rayStartWorld))
-            printfn "(%f, %f, %f) (%f, %f, %f)" origin.X origin.Y origin.Z rayDirection.X rayDirection.Y rayDirection.Z
-            stack <- rayIntersections origin rayDirection svo
     do Glfw.SetCursorPosCallback (window, GlfwCursorPosFun mousePosCallback) |> ignore
 
     // defaults for testing
@@ -90,8 +89,8 @@ type ViewCamera (origin, rho, theta, fov, window, svo : SparseVoxelOctree<Option
         with get () = Vector4 (sin rho * cos theta, cos rho, sin rho * sin theta, 1.f)
     member this.Origin
         with get () = origin
-    member this.SelectedVoxel
-        with get () = stack
+    member this.HitPosition
+        with get () = hitPosition
     member this.ViewMatrix
         with get () = view
     member this.ProjectionMatrix

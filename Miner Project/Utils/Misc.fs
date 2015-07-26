@@ -16,6 +16,8 @@ type Axes =
     | Y
     | Z
 
+let axes = [| X; Y; Z |]
+
 let axisIx axis = 
     match axis with
     | X -> 0
