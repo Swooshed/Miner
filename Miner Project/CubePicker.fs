@@ -24,13 +24,13 @@ let rayHit (origin : Vector4) (directionRaw : Vector4) (svo : SparseVoxelOctree<
     // The ray is given by x = origin + t * direction
     // => t = (x - origin) / direction
     // => t = x * 1/direction - origin/direction
-    // => t = x * tCoeff + tBias
+    // => t = x * tCoeff - tBias
     // => tCoeff := 1/direction; tBias := origin/direction 
     let tCoeff = mapVector (fun x -> 1.f / abs x) direction
     let tBias = zipVectorWith (*) tCoeff origin
         
     //let tMinInitial = max (0.f, maxVector (2.f * tCoeff - tBiasInitial))
-    let tSVO axis x = tCoeff.[axisIx axis] * x + tBias.[axisIx axis]
+    let tSVO axis x = tCoeff.[axisIx axis] * x - tBias.[axisIx axis]
 
     let (tMin, tMax) =
         let tMinMaxes =
@@ -46,7 +46,7 @@ let rayHit (origin : Vector4) (directionRaw : Vector4) (svo : SparseVoxelOctree<
     //System.Console.ReadLine() |> ignore
     if tMin <= tMax then printfn "No hit in initialisation"; None else 
     printfn "Hit in initialisation"
-    // FIXME: always triggers
+    // FIXME: triggers weirdly
     let rec rayHitGo (parent : SparseVoxelOctree<Option<'a>>) origin = 
         let tBias = zipVectorWith (*) tCoeff origin
         let tParent axis x = tCoeff.[axisIx axis] * x + tBias.[axisIx axis]

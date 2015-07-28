@@ -1,6 +1,8 @@
 ﻿module Miner.Utils.Misc
 
+open Pencil.Gaming.Graphics
 open Pencil.Gaming.MathUtils
+
 open System.Collections.Generic
 
 let zipVectorWith f (v : Vector4) (w : Vector4) = Vector4(f v.X w.X, f v.Y w.Y, f v.Z w.Z, max v.W w.W)
@@ -39,7 +41,7 @@ let childOrigin n =
 // (same for all the other axes)
 let toChildSpace n = 
     let scale = Matrix.CreateScale 2.f
-    let move = Matrix.CreateTranslation(-(childOrigin n).Xyz)
+    let move = Matrix.CreateTranslation -(childOrigin n).Xyz
     move * scale
 
 // To use when going from the perspective of the child to the adult (i.e. drawing)
@@ -48,5 +50,56 @@ let toChildSpace n =
 // (same for all the other axes)
 let fromChildSpace n =
     let scale = Matrix.CreateScale 0.5f
-    let move = Matrix.CreateTranslation ((childOrigin n).Xyz)
+    let move = Matrix.CreateTranslation (childOrigin n).Xyz
     scale * move
+
+let drawLine (p1:Vector4) (p2:Vector4) =
+    let p1 = Vector4 (0.f, 0.f, 0.f, 1.f)
+    let p2 = Vector4 (5.f, 5.f, 0.f, 1.f)
+    GL.LineWidth 5.f
+    GL.Color3 (1.f, 1.f, 1.f)
+    GL.Begin BeginMode.Lines
+    GL.Vertex3 p1.Xyz
+    GL.Vertex3 p2.Xyz
+    GL.End ()
+
+let drawTinyCube () =
+    GL.Color3 (0.0f, 1.0f, 0.0f)     // Green
+    GL.Begin (BeginMode.Quads) // Begin drawing the color cube with 6 quads
+    // Top face (y = 0.1f)
+    // Define vertices in counter-clockwise (CCW) order with normal pointing out
+    GL.Vertex3 ( 0.1f, 0.1f, -0.1f)
+    GL.Vertex3 (-0.1f, 0.1f, -0.1f)
+    GL.Vertex3 (-0.1f, 0.1f,  0.1f)
+    GL.Vertex3 ( 0.1f, 0.1f,  0.1f)
+ 
+    // Bottom face (y = -0.1f)
+    GL.Vertex3 ( 0.1f, -0.1f,  0.1f)
+    GL.Vertex3 (-0.1f, -0.1f,  0.1f)
+    GL.Vertex3 (-0.1f, -0.1f, -0.1f)
+    GL.Vertex3 ( 0.1f, -0.1f, -0.1f)
+ 
+    // Front face  (z = 0.1f)
+    GL.Vertex3 ( 0.1f,  0.1f, 0.1f)
+    GL.Vertex3 (-0.1f,  0.1f, 0.1f)
+    GL.Vertex3 (-0.1f, -0.1f, 0.1f)
+    GL.Vertex3 ( 0.1f, -0.1f, 0.1f)
+ 
+    // Back face (z = -0.1f)
+    GL.Vertex3 ( 0.1f, -0.1f, -0.1f)
+    GL.Vertex3 (-0.1f, -0.1f, -0.1f)
+    GL.Vertex3 (-0.1f,  0.1f, -0.1f)
+    GL.Vertex3 ( 0.1f,  0.1f, -0.1f)
+ 
+    // Left face (x = -0.1f)
+    GL.Vertex3 (-0.1f,  0.1f,  0.1f)
+    GL.Vertex3 (-0.1f,  0.1f, -0.1f)
+    GL.Vertex3 (-0.1f, -0.1f, -0.1f)
+    GL.Vertex3 (-0.1f, -0.1f,  0.1f)
+ 
+    // Right face (x = 0.1f)
+    GL.Vertex3 (0.1f,  0.1f, -0.1f)
+    GL.Vertex3 (0.1f,  0.1f,  0.1f)
+    GL.Vertex3 (0.1f, -0.1f,  0.1f)
+    GL.Vertex3 (0.1f, -0.1f, -0.1f)
+    GL.End ()  // End of drawing color-cube

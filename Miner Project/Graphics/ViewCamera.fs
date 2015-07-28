@@ -77,6 +77,10 @@ type ViewCamera (origin, rho, theta, fov, window, svo : SparseVoxelOctree<Option
             let positionFar = Vector4 (GL.Utils.UnProject (farWinCoords, modelView, projection, viewport), 1.f)
             hitPosition <- rayHit positionNear (positionFar - positionNear) svo
 
+            // TODO: delete this cube drawing code      
+            drawTinyCube ()
+            drawLine positionNear positionFar
+
     do Glfw.SetCursorPosCallback (window, GlfwCursorPosFun mousePosCallback) |> ignore
 
     // defaults for testing
@@ -109,7 +113,7 @@ type ViewCamera (origin, rho, theta, fov, window, svo : SparseVoxelOctree<Option
             Glfw.SetCursorPos (window, float (width/2), float (height/2))
 
             let newRho = rho + pitchSpeed * dt * (float32 height/2.f - float32 ypos)
-            if 0.f < newRho && newRho < pi then rho <- newRho
+            if 0.f < newRho && newRho < pi/2.f then rho <- newRho
             theta <- (theta - rotateSpeed * dt * (float32 width/2.f - float32 xpos)) % (2.f*pi)
 
         let moveForward = Vector4.Normalize(Vector4 (-this.EyeOffset.X, 0.f, -this.EyeOffset.Z, 0.f))
