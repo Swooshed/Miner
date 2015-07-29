@@ -11,6 +11,8 @@ let mapVector f (v : Vector4) = Vector4(f v.X, f v.Y, f v.Z, v.W)
 let maxVector (v : Vector4) = max (max v.X v.Y) v.Z
 let minVector (v : Vector4) = min (min v.X v.Y) v.Z
 
+let sortPair (f1, f2) = if f1 < f2 then f1, f2 else f2, f1
+
 let intIf b = if b then 1 else 0
 
 type Axes = 

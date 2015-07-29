@@ -72,10 +72,15 @@ type ViewCamera (origin, rho, theta, fov, window, svo : SparseVoxelOctree<Option
                 
             let mutable getParams = [| 0;0;0;0 |]
             GL.GetInteger (GetPName.Viewport, getParams)
-            let viewport = Rectanglei (getParams.[0], getParams.[1], getParams.[2], getParams.[3])
+            let [| x; y; w; h |] = getParams
+            let viewport = Rectanglei (x, y, w, h)
+            //let positionNear = origin + Vector4 (sin rho * cos theta, cos rho, sin rho * sin theta, 1.f)
             let positionNear = Vector4 (GL.Utils.UnProject (nearWinCoords, modelView, projection, viewport), 1.f)
             let positionFar = Vector4 (GL.Utils.UnProject (farWinCoords, modelView, projection, viewport), 1.f)
             hitPosition <- rayHit positionNear (positionFar - positionNear) svo
+
+            // FIXME: hitpos is relative to camera position, need to get absolute coords
+            //printfn "near = %A\nfar = %A" positionNear positionFar
 
             // TODO: delete this cube drawing code      
             drawTinyCube ()

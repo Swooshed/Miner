@@ -1,6 +1,6 @@
 ﻿module Miner.Blocks
 
-// TODO: override equality
+[<StructuralEquality; NoComparison>]
 type Block = 
     | Opaque
     | Translucent
